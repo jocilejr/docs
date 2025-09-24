@@ -26,6 +26,8 @@ O comando deve ser executado na raiz do repositório.
 
 Utilize o script `installer.py` para configurar um front-end que consome os serviços descritos nesta documentação e garantir que o pacote `baileys` será instalado.
 
+> 💡 Este repositório inclui um exemplo mínimo em `frontend/` com `package.json`, scripts de build/start e um serviço `baileys-service.js`. Use-o para validar o fluxo do instalador ou como referência para adaptar o seu projeto.
+
 ### Pré-requisitos
 
 - Python 3.8+
@@ -35,22 +37,26 @@ Utilize o script `installer.py` para configurar um front-end que consome os serv
 ### Uso básico
 
 ```bash
+# Use o projeto de exemplo
 python installer.py --frontend-path frontend/
+
+# OU aponte para um projeto Node.js existente
+python installer.py --frontend-path caminho/para/seu/projeto
 ```
 
-O comando acima irá:
+O comando acima executa uma sequência de etapas no diretório informado:
 
-1. Validar a presença do Node.js/npm.
-2. Executar `npm install` no diretório informado.
-3. Garantir que o pacote `baileys` está instalado como dependência (`npm install baileys`).
-4. Executar `npm run build`.
-5. Iniciar `npm run start` e, em paralelo, tentar iniciar `node baileys-service.js` dentro do diretório do front-end usando a porta `3002` via variável de ambiente `BAILEYS_PORT`.
+1. **Validação do ambiente Node.js** – garante que `node` e `npm` estão disponíveis, pois são obrigatórios para gerenciar o front-end.
+2. **Instalação de dependências** – roda `npm install` para baixar as dependências do projeto e, em seguida, força a instalação do pacote `baileys` com `npm install baileys` para assegurar sua presença.
+3. **Build do front-end** – executa `npm run build`, permitindo que você rode qualquer processo de build definido no seu `package.json` (no exemplo incluso, apenas imprime uma mensagem).
+4. **Inicialização do front-end** – aciona `npm run start`, útil para levantar o servidor do seu aplicativo (o exemplo disponibiliza um servidor HTTP simples).
+5. **Serviço Baileys auxiliar** – inicia `node baileys-service.js` (ou o comando definido via `--baileys-command`) com a variável `BAILEYS_PORT` apontando para a porta especificada, simulando a camada de integração com o Baileys.
 
 O script aguarda a finalização das execuções iniciadas; encerre com `Ctrl+C` quando não forem mais necessárias.
 
 ### Parâmetros disponíveis
 
-- `--frontend-path`: caminho para o diretório do front-end (padrão: `frontend`).
+- `--frontend-path`: caminho para o diretório do front-end (padrão: `frontend`). Se você não possui um projeto próprio, utilize o exemplo incluso ou ajuste este caminho para apontar para o seu projeto Node.js.
 - `--port`: porta utilizada pelo serviço Baileys (padrão: `3002`).
 - `--baileys-command`: substitui o comando padrão (`node baileys-service.js`). Informe após a flag todo o comando que deseja executar.
 - `--skip-build`, `--skip-start`, `--skip-baileys`: permitem pular etapas específicas do fluxo padrão.

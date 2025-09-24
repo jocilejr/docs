@@ -1,0 +1,10 @@
+{
+  "name": "whatsapp-docs-frontend-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Exemplo mínimo de front-end para uso com installer.py.",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "start": "node scripts/start.js"
+  }
+}

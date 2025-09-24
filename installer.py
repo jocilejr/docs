@@ -185,7 +185,15 @@ def main() -> None:
     logging.info("Diretório do front-end: %s", frontend_path)
     if not frontend_path.exists() or not frontend_path.is_dir():
         logging.error("Diretório do front-end não existe: %s", frontend_path)
-        raise SystemExit(1)
+        logging.error(
+            "Use --frontend-path para apontar para um projeto Node.js válido ou utilize o exemplo em ./frontend descrito no README.md."
+        )
+        logging.error(
+            "Consulte a seção 'Automatizando a preparação do front-end' no README para detalhes sobre o fluxo completo."
+        )
+        raise SystemExit(
+            "Caminho do front-end inválido. Ajuste o parâmetro --frontend-path conforme a documentação."
+        )
 
     ensure_node_and_npm()
     install_dependencies(frontend_path)
