@@ -1092,6 +1092,8 @@
                 if (imageSrc) {
                   qrImage.src = imageSrc;
                   qrImage.classList.remove('hidden');
+fix-qr-code-scanning-failure-5b4drq
+
 
                   const expiresIn = extractExpiresIn(data);
                   if (typeof expiresIn === 'number' && expiresIn > 0) {
@@ -1106,6 +1108,8 @@
                 }
 
                 console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
+fix-qr-code-scanning-failure-5b4drq
+
               }
 
               const message =
@@ -1120,6 +1124,8 @@
                 stopQrPolling(instanceId);
                 return;
               }
+
+fix-qr-code-scanning-failure-5b4drq
 
               scheduleNextFetch(7000);
             } catch (error) {
@@ -1161,7 +1167,9 @@
 
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
+fix-qr-code-scanning-failure-5b4drq
         const handleServerChange = async () => {
+
           const sanitized = sanitizeBaseUrl(serverInput.value);
           if (sanitized !== serverInput.value) {
             serverInput.value = sanitized;
