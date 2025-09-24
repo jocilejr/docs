@@ -438,11 +438,27 @@
           polling: new Map(),
         };
 
+        function sanitizeBaseUrl(raw) {
+          if (!raw) return '';
+          const trimmed = raw.trim();
+          if (!trimmed) return '';
+          if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed.replace(/\/+$/, '');
+          }
+          if (/^\/\//.test(trimmed)) {
+            return `https:${trimmed}`.replace(/\/+$/, '');
+          }
+          if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+            return `http://${trimmed}`.replace(/\/+$/, '');
+          }
+          return trimmed.replace(/\/+$/, '');
+        }
+
         function loadSettings() {
           try {
             const savedBase = localStorage.getItem('baileys-panel-base');
             const savedToken = localStorage.getItem('baileys-panel-token');
-            if (savedBase) serverInput.value = savedBase;
+            if (savedBase) serverInput.value = sanitizeBaseUrl(savedBase);
             if (savedToken) tokenInput.value = savedToken;
           } catch (error) {
             console.warn('Não foi possível carregar configurações salvas:', error);
@@ -451,7 +467,7 @@
 
         function persistSettings() {
           try {
-            localStorage.setItem('baileys-panel-base', serverInput.value.trim());
+            localStorage.setItem('baileys-panel-base', sanitizeBaseUrl(serverInput.value));
             localStorage.setItem('baileys-panel-token', tokenInput.value.trim());
           } catch (error) {
             console.warn('Não foi possível salvar configurações:', error);
@@ -459,7 +475,7 @@
         }
 
         function getBaseUrl() {
-          return serverInput.value.trim();
+          return sanitizeBaseUrl(serverInput.value);
         }
 
         function normalizePath(path) {
@@ -1048,7 +1064,8 @@
                 if (imageSrc) {
                   qrImage.src = imageSrc;
                   qrImage.classList.remove('hidden');
-fix-qr-code-scanning-failure-hury0x
+fix-qr-code-scanning-failure-t6ru6p
+
 
                   const expiresIn = extractExpiresIn(data);
                   if (typeof expiresIn === 'number' && expiresIn > 0) {
@@ -1063,7 +1080,7 @@ fix-qr-code-scanning-failure-hury0x
                 }
 
                 console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
-
+fix-qr-code-scanning-failure-t6ru6p
               }
 
               const message =
@@ -1078,6 +1095,7 @@ fix-qr-code-scanning-failure-hury0x
                 stopQrPolling(instanceId);
                 return;
               }
+
 
               scheduleNextFetch(7000);
             } catch (error) {
@@ -1120,6 +1138,10 @@ fix-qr-code-scanning-failure-hury0x
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
         const handleServerChange = () => {
+          const sanitized = sanitizeBaseUrl(serverInput.value);
+          if (sanitized !== serverInput.value) {
+            serverInput.value = sanitized;
+          }
           persistSettings();
           renderInstances();
         };
