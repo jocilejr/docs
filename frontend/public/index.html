@@ -3,21 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>API Documentation</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css"
-    />
+    <title>Painel Baileys</title>
     <style>
       body {
         font-family: Arial, Helvetica, sans-serif;
         margin: 0;
         padding: 0;
         background-color: #f5f7fa;
-      }
-
-      #swagger-ui {
-        margin-bottom: 32px;
       }
 
       #baileys-dashboard {
@@ -55,6 +47,17 @@
       .panel-section h3 {
         margin-top: 0;
         color: #243b53;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      @media (min-width: 720px) {
+        .form-grid.two-columns {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
 
       label {
@@ -134,22 +137,36 @@
     </style>
   </head>
   <body>
-    <div id="swagger-ui"></div>
     <div id="baileys-dashboard">
       <h2>Painel interativo Baileys</h2>
       <p class="dashboard-description">
-        Utilize o painel abaixo para acionar rapidamente as rotas documentadas. As chamadas usam os mesmos servidores
-        disponíveis no Swagger UI e reaproveitam o token Bearer configurado em "Authorize".
+        Utilize o painel abaixo para acionar rapidamente as principais rotas da API. Informe o servidor desejado e o
+        token Bearer para autenticação antes de enviar as requisições.
       </p>
 
       <div class="panel-section">
-        <h3>Servidor alvo</h3>
-        <label for="server-select">Selecione o servidor:</label>
-        <select id="server-select"></select>
-        <p class="inline-hint">
-          Os servidores listados são obtidos da especificação. Caso altere o servidor no Swagger UI, atualize aqui para usar a
-          mesma base.
-        </p>
+        <h3>Configurações gerais</h3>
+        <div class="form-grid two-columns">
+          <div>
+            <label for="server-base">Servidor alvo (base URL)</label>
+            <input
+              id="server-base"
+              name="server-base"
+              placeholder="https://api.exemplo.com"
+              type="url"
+            />
+            <p class="inline-hint">Deixe em branco para utilizar caminhos relativos ao mesmo domínio.</p>
+          </div>
+          <div>
+            <label for="bearer-token">Token Bearer</label>
+            <input
+              id="bearer-token"
+              name="bearer-token"
+              placeholder="Bearer eyJhbGciOi..."
+            />
+            <p class="inline-hint">Se o token não possuir o prefixo <code>Bearer</code>, ele será adicionado automaticamente.</p>
+          </div>
+        </div>
       </div>
 
       <div class="panel-section">
@@ -217,20 +234,14 @@
         </div>
       </div>
     </div>
-    <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js" crossorigin="anonymous"></script>
     <script>
       window.addEventListener('load', () => {
-        const ui = SwaggerUIBundle({
-          url: '/openapi.yaml',
-          dom_id: '#swagger-ui',
-        });
-
-        window.ui = ui;
-        initBaileysDashboard(ui);
+        initBaileysDashboard();
       });
 
-      function initBaileysDashboard(ui) {
-        const serverSelect = document.getElementById('server-select');
+      function initBaileysDashboard() {
+        const serverInput = document.getElementById('server-base');
+        const tokenInput = document.getElementById('bearer-token');
         const createForm = document.getElementById('create-instance-form');
         const createResult = document.getElementById('create-instance-result');
         const qrForm = document.getElementById('qr-code-form');
@@ -239,85 +250,43 @@
         const messageForm = document.getElementById('send-message-form');
         const messageResult = document.getElementById('send-message-result');
 
-        const refreshServers = () => {
+        try {
+          const savedServer = localStorage.getItem('baileys-dashboard-server');
+          if (savedServer) {
+            serverInput.value = savedServer;
+          }
+          const savedToken = localStorage.getItem('baileys-dashboard-token');
+          if (savedToken) {
+            tokenInput.value = savedToken;
+          }
+        } catch (error) {
+          console.warn('Não foi possível recuperar configurações salvas:', error);
+        }
+
+        const persistSettings = () => {
           try {
-            const servers = ui?.specSelectors?.servers?.();
-            const list = typeof servers?.toJS === 'function' ? servers.toJS() : Array.isArray(servers) ? servers : [];
-            if (!Array.isArray(list) || !list.length) {
-              if (!serverSelect.options.length) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Usar mesmo host (relativo)';
-                option.selected = true;
-                serverSelect.appendChild(option);
-              }
-              return;
-            }
-
-            const currentValue = serverSelect.value;
-            serverSelect.innerHTML = '';
-
-            list.forEach((server, index) => {
-              const option = document.createElement('option');
-              option.value = server?.url || '';
-              option.textContent = `${server?.url || 'Desconhecido'}${server?.description ? ` – ${server.description}` : ''}`;
-              if ((!currentValue && index === 0) || currentValue === option.value) {
-                option.selected = true;
-              }
-              serverSelect.appendChild(option);
-            });
+            localStorage.setItem('baileys-dashboard-server', serverInput.value.trim());
+            localStorage.setItem('baileys-dashboard-token', tokenInput.value.trim());
           } catch (error) {
-            console.error('Erro ao carregar servidores do Swagger UI:', error);
+            console.warn('Não foi possível salvar configurações:', error);
           }
         };
 
-        const serversInterval = setInterval(() => {
-          if (serverSelect.options.length) {
-            clearInterval(serversInterval);
-            return;
-          }
-          refreshServers();
-        }, 500);
+        serverInput.addEventListener('change', persistSettings);
+        tokenInput.addEventListener('change', persistSettings);
 
-        setTimeout(refreshServers, 1500);
-
-        const getSelectedServer = () => serverSelect.value?.trim();
+        const getSelectedServer = () => serverInput.value?.trim();
 
         const buildUrl = (path) => {
           const base = getSelectedServer() || '';
           const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-          return `${normalizedBase}${path}`;
-        };
-
-        const extractBearerToken = () => {
-          try {
-            const state = ui?.getState?.()?.toJSON?.();
-            const auth = state?.auth || {};
-            const candidates = [
-              auth?.authorized?.bearerAuth?.value,
-              auth?.authorized?.bearerAuth?.token,
-              auth?.authorized?.bearerAuth,
-              auth?.configs?.bearerAuth?.value,
-              auth?.configs?.bearerAuth,
-            ].filter(Boolean);
-
-            for (const candidate of candidates) {
-              if (typeof candidate === 'string') {
-                return candidate;
-              }
-              if (typeof candidate === 'object') {
-                if (typeof candidate?.token === 'string') {
-                  return candidate.token;
-                }
-                if (typeof candidate?.value === 'string') {
-                  return candidate.value;
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('Não foi possível recuperar o token Bearer do Swagger UI:', error);
+          if (!normalizedBase) {
+            return path;
           }
-          return '';
+          if (!path.startsWith('/')) {
+            return `${normalizedBase}/${path}`;
+          }
+          return `${normalizedBase}${path}`;
         };
 
         const buildHeaders = (contentType = 'application/json') => {
@@ -325,11 +294,12 @@
           if (contentType) {
             headers['Content-Type'] = contentType;
           }
-          const token = extractBearerToken();
+          const token = tokenInput.value.trim();
           if (token) {
             headers.Authorization = token.toLowerCase().startsWith('bearer ')
               ? token
               : `Bearer ${token}`;
+            persistSettings();
           }
           return headers;
         };
