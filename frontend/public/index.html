@@ -8,17 +8,473 @@
       rel="stylesheet"
       href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css"
     />
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f7fa;
+      }
+
+      #swagger-ui {
+        margin-bottom: 32px;
+      }
+
+      #baileys-dashboard {
+        max-width: 960px;
+        margin: 0 auto 48px auto;
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      #baileys-dashboard h2 {
+        margin-top: 0;
+        color: #1f2933;
+      }
+
+      .dashboard-description {
+        color: #52606d;
+        margin-bottom: 16px;
+      }
+
+      .panel-section {
+        margin-bottom: 24px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid #e4e7eb;
+      }
+
+      .panel-section:last-of-type {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .panel-section h3 {
+        margin-top: 0;
+        color: #243b53;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #243b53;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #cbd2d9;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      button {
+        background-color: #2563eb;
+        color: #ffffff;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 16px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #1d4ed8;
+      }
+
+      pre {
+        background: #f8fafc;
+        border: 1px solid #e4e7eb;
+        border-radius: 4px;
+        padding: 12px;
+        overflow-x: auto;
+        font-size: 13px;
+        color: #1f2933;
+      }
+
+      .result-container {
+        margin-top: 12px;
+      }
+
+      .error {
+        color: #b91c1c;
+      }
+
+      .qr-preview {
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .qr-preview img {
+        max-width: 240px;
+        border: 1px solid #cbd2d9;
+        border-radius: 8px;
+        padding: 8px;
+        background: #ffffff;
+      }
+
+      .inline-hint {
+        font-size: 12px;
+        color: #829ab1;
+        margin-top: -8px;
+        margin-bottom: 12px;
+      }
+    </style>
   </head>
   <body>
     <div id="swagger-ui"></div>
+    <div id="baileys-dashboard">
+      <h2>Painel interativo Baileys</h2>
+      <p class="dashboard-description">
+        Utilize o painel abaixo para acionar rapidamente as rotas documentadas. As chamadas usam os mesmos servidores
+        disponíveis no Swagger UI e reaproveitam o token Bearer configurado em "Authorize".
+      </p>
+
+      <div class="panel-section">
+        <h3>Servidor alvo</h3>
+        <label for="server-select">Selecione o servidor:</label>
+        <select id="server-select"></select>
+        <p class="inline-hint">
+          Os servidores listados são obtidos da especificação. Caso altere o servidor no Swagger UI, atualize aqui para usar a
+          mesma base.
+        </p>
+      </div>
+
+      <div class="panel-section">
+        <h3>Criar instância</h3>
+        <form id="create-instance-form">
+          <label for="instance-id">Identificador da instância</label>
+          <input id="instance-id" name="instance-id" placeholder="instancia-01" required />
+
+          <label for="instance-name">Nome (opcional)</label>
+          <input id="instance-name" name="instance-name" placeholder="Instância principal" />
+
+          <label for="instance-webhook">Webhook URL (opcional)</label>
+          <input id="instance-webhook" name="instance-webhook" placeholder="https://exemplo.com/webhooks" />
+
+          <button type="submit">Criar instância</button>
+        </form>
+        <div class="result-container">
+          <pre id="create-instance-result">Aguardando envio...</pre>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Recuperar QR Code</h3>
+        <form id="qr-code-form">
+          <label for="qr-instance-id">Identificador da instância</label>
+          <input id="qr-instance-id" name="qr-instance-id" placeholder="instancia-01" required />
+
+          <button type="submit">Buscar QR Code</button>
+        </form>
+        <div class="result-container">
+          <pre id="qr-code-result">Aguardando envio...</pre>
+          <div class="qr-preview" id="qr-code-preview"></div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3>Enviar mensagem</h3>
+        <form id="send-message-form">
+          <label for="message-instance-id">Identificador da instância</label>
+          <input id="message-instance-id" name="message-instance-id" placeholder="instancia-01" required />
+
+          <label for="message-to">Número do destinatário (DDD + número)</label>
+          <input id="message-to" name="message-to" placeholder="5599999999999" required />
+
+          <label for="message-type">Tipo de mensagem</label>
+          <select id="message-type" name="message-type">
+            <option value="text" selected>text</option>
+            <option value="media">media</option>
+            <option value="template">template</option>
+          </select>
+
+          <label for="message-payload">Payload da mensagem (JSON)</label>
+          <textarea
+            id="message-payload"
+            name="message-payload"
+            placeholder='{"text": "Olá, esta é uma mensagem automática."}'
+            required
+          ></textarea>
+          <p class="inline-hint">Informe o objeto JSON conforme o tipo selecionado.</p>
+
+          <button type="submit">Enviar mensagem</button>
+        </form>
+        <div class="result-container">
+          <pre id="send-message-result">Aguardando envio...</pre>
+        </div>
+      </div>
+    </div>
     <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js" crossorigin="anonymous"></script>
     <script>
       window.addEventListener('load', () => {
-        SwaggerUIBundle({
+        const ui = SwaggerUIBundle({
           url: '/openapi.yaml',
           dom_id: '#swagger-ui',
         });
+
+        window.ui = ui;
+        initBaileysDashboard(ui);
       });
+
+      function initBaileysDashboard(ui) {
+        const serverSelect = document.getElementById('server-select');
+        const createForm = document.getElementById('create-instance-form');
+        const createResult = document.getElementById('create-instance-result');
+        const qrForm = document.getElementById('qr-code-form');
+        const qrResult = document.getElementById('qr-code-result');
+        const qrPreview = document.getElementById('qr-code-preview');
+        const messageForm = document.getElementById('send-message-form');
+        const messageResult = document.getElementById('send-message-result');
+
+        const refreshServers = () => {
+          try {
+            const servers = ui?.specSelectors?.servers?.();
+            const list = typeof servers?.toJS === 'function' ? servers.toJS() : Array.isArray(servers) ? servers : [];
+            if (!Array.isArray(list) || !list.length) {
+              if (!serverSelect.options.length) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Usar mesmo host (relativo)';
+                option.selected = true;
+                serverSelect.appendChild(option);
+              }
+              return;
+            }
+
+            const currentValue = serverSelect.value;
+            serverSelect.innerHTML = '';
+
+            list.forEach((server, index) => {
+              const option = document.createElement('option');
+              option.value = server?.url || '';
+              option.textContent = `${server?.url || 'Desconhecido'}${server?.description ? ` – ${server.description}` : ''}`;
+              if ((!currentValue && index === 0) || currentValue === option.value) {
+                option.selected = true;
+              }
+              serverSelect.appendChild(option);
+            });
+          } catch (error) {
+            console.error('Erro ao carregar servidores do Swagger UI:', error);
+          }
+        };
+
+        const serversInterval = setInterval(() => {
+          if (serverSelect.options.length) {
+            clearInterval(serversInterval);
+            return;
+          }
+          refreshServers();
+        }, 500);
+
+        setTimeout(refreshServers, 1500);
+
+        const getSelectedServer = () => serverSelect.value?.trim();
+
+        const buildUrl = (path) => {
+          const base = getSelectedServer() || '';
+          const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+          return `${normalizedBase}${path}`;
+        };
+
+        const extractBearerToken = () => {
+          try {
+            const state = ui?.getState?.()?.toJSON?.();
+            const auth = state?.auth || {};
+            const candidates = [
+              auth?.authorized?.bearerAuth?.value,
+              auth?.authorized?.bearerAuth?.token,
+              auth?.authorized?.bearerAuth,
+              auth?.configs?.bearerAuth?.value,
+              auth?.configs?.bearerAuth,
+            ].filter(Boolean);
+
+            for (const candidate of candidates) {
+              if (typeof candidate === 'string') {
+                return candidate;
+              }
+              if (typeof candidate === 'object') {
+                if (typeof candidate?.token === 'string') {
+                  return candidate.token;
+                }
+                if (typeof candidate?.value === 'string') {
+                  return candidate.value;
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('Não foi possível recuperar o token Bearer do Swagger UI:', error);
+          }
+          return '';
+        };
+
+        const buildHeaders = (contentType = 'application/json') => {
+          const headers = { Accept: 'application/json' };
+          if (contentType) {
+            headers['Content-Type'] = contentType;
+          }
+          const token = extractBearerToken();
+          if (token) {
+            headers.Authorization = token.toLowerCase().startsWith('bearer ')
+              ? token
+              : `Bearer ${token}`;
+          }
+          return headers;
+        };
+
+        const renderResult = async (response, target) => {
+          let text = '';
+          try {
+            text = await response.clone().text();
+          } catch (error) {
+            console.warn('Não foi possível ler a resposta como texto:', error);
+          }
+
+          let formatted = text;
+          try {
+            formatted = JSON.stringify(JSON.parse(text), null, 2);
+            target.classList.remove('error');
+          } catch (error) {
+            if (!response.ok) {
+              target.classList.add('error');
+            } else {
+              target.classList.remove('error');
+            }
+          }
+
+          if (!response.ok) {
+            target.classList.add('error');
+          }
+
+          target.textContent = formatted || '(sem conteúdo)';
+          return text;
+        };
+
+        createForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          createResult.textContent = 'Enviando...';
+          createResult.classList.remove('error');
+
+          const id = document.getElementById('instance-id').value.trim();
+          const name = document.getElementById('instance-name').value.trim();
+          const webhook = document.getElementById('instance-webhook').value.trim();
+
+          const payload = { id };
+          if (name || webhook) {
+            payload.metadata = {};
+            if (name) payload.metadata.name = name;
+            if (webhook) payload.metadata.webhookUrl = webhook;
+          }
+
+          try {
+            const response = await fetch(buildUrl('/instances'), {
+              method: 'POST',
+              headers: buildHeaders(),
+              body: JSON.stringify(payload),
+            });
+            await renderResult(response, createResult);
+          } catch (error) {
+            createResult.classList.add('error');
+            createResult.textContent = `Erro ao enviar requisição: ${error.message}`;
+          }
+        });
+
+        qrForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          qrResult.textContent = 'Buscando QR Code...';
+          qrResult.classList.remove('error');
+          qrPreview.innerHTML = '';
+
+          const instanceId = document.getElementById('qr-instance-id').value.trim();
+          const url = buildUrl(`/qrcode?instanceId=${encodeURIComponent(instanceId)}`);
+
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: buildHeaders(null),
+            });
+            const rawText = await renderResult(response, qrResult);
+
+            if (response.ok) {
+              let data = null;
+              try {
+                data = JSON.parse(rawText);
+              } catch (error) {
+                console.warn('Não foi possível interpretar a resposta de QR Code como JSON:', error);
+              }
+              if (data?.image?.type === 'base64' && data?.image?.value) {
+                const image = document.createElement('img');
+                image.alt = `QR Code da instância ${data.instanceId || instanceId}`;
+                image.src = `data:image/png;base64,${data.image.value}`;
+                qrPreview.innerHTML = '';
+                qrPreview.appendChild(image);
+              } else if (data?.image?.type === 'url' && data?.image?.value) {
+                const link = document.createElement('a');
+                link.href = data.image.value;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = 'Abrir QR Code hospedado';
+                qrPreview.innerHTML = '';
+                qrPreview.appendChild(link);
+              }
+            }
+          } catch (error) {
+            qrResult.classList.add('error');
+            qrResult.textContent = `Erro ao buscar QR Code: ${error.message}`;
+          }
+        });
+
+        messageForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          messageResult.textContent = 'Enviando mensagem...';
+          messageResult.classList.remove('error');
+
+          const instanceId = document.getElementById('message-instance-id').value.trim();
+          const to = document.getElementById('message-to').value.trim();
+          const type = document.getElementById('message-type').value;
+          const rawPayload = document.getElementById('message-payload').value.trim();
+
+          let messagePayload;
+          try {
+            messagePayload = rawPayload ? JSON.parse(rawPayload) : {};
+          } catch (error) {
+            messageResult.classList.add('error');
+            messageResult.textContent = `Payload inválido: ${error.message}`;
+            return;
+          }
+
+          const payload = {
+            instanceId,
+            to,
+            type,
+            message: messagePayload,
+          };
+
+          try {
+            const response = await fetch(buildUrl('/messages'), {
+              method: 'POST',
+              headers: buildHeaders(),
+              body: JSON.stringify(payload),
+            });
+            await renderResult(response, messageResult);
+          } catch (error) {
+            messageResult.classList.add('error');
+            messageResult.textContent = `Erro ao enviar mensagem: ${error.message}`;
+          }
+        });
+      }
     </script>
   </body>
 </html>
