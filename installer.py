@@ -15,7 +15,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Sequence, Tuple
 
 
 DEFAULT_FRONTEND_PATH = "frontend"
@@ -139,9 +139,26 @@ def run_build(frontend_path: Path) -> None:
     run_command(["npm", "run", "build"], cwd=frontend_path)
 
 
-def run_start(frontend_path: Path) -> None:
+def run_command_async(
+    command: Sequence[str],
+    processes: List[subprocess.Popen],
+    cwd: Optional[Path] = None,
+    env: Optional[dict[str, str]] = None,
+) -> None:
+    display_cmd = " ".join(command)
+    logging.info(
+        "Executando comando assíncrono: %s (cwd=%s)", display_cmd, cwd or os.getcwd()
+    )
+    process = subprocess.Popen(command, cwd=cwd, env=env)
+    processes.append(process)
+    returncode = process.wait()
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, command)
+
+
+def run_start(frontend_path: Path, processes: List[subprocess.Popen]) -> None:
     logging.info("Iniciando front-end (npm run start)")
-    run_command(["npm", "run", "start"], cwd=frontend_path)
+    run_command_async(["npm", "run", "start"], processes, cwd=frontend_path)
 
 
 def get_baileys_command(args: argparse.Namespace, frontend_path: Path) -> List[str]:
@@ -158,7 +175,11 @@ def get_baileys_command(args: argparse.Namespace, frontend_path: Path) -> List[s
     return ["node", str(script_path)]
 
 
-def run_baileys_service(args: argparse.Namespace, frontend_path: Path) -> None:
+def run_baileys_service(
+    args: argparse.Namespace,
+    frontend_path: Path,
+    processes: List[subprocess.Popen],
+) -> None:
     env = os.environ.copy()
     env.setdefault("BAILEYS_PORT", str(args.port))
     command = get_baileys_command(args, frontend_path)
@@ -167,14 +188,7 @@ def run_baileys_service(args: argparse.Namespace, frontend_path: Path) -> None:
         args.port,
         " ".join(command),
     )
-    try:
-        subprocess.run(command, cwd=frontend_path, check=True, env=env)
-    except subprocess.CalledProcessError as exc:
-        logging.error(
-            "Serviço Baileys terminou com código %s.",
-            exc.returncode,
-        )
-        raise
+    run_command_async(command, processes, cwd=frontend_path, env=env)
 
 
 def main() -> None:
@@ -198,7 +212,21 @@ def main() -> None:
     ensure_node_and_npm()
     install_dependencies(frontend_path)
 
-    threads = []
+    threads: List[threading.Thread] = []
+    processes: List[subprocess.Popen] = []
+    thread_errors: List[Tuple[str, BaseException]] = []
+    errors_lock = threading.Lock()
+
+    def thread_wrapper(name: str, target, *target_args) -> threading.Thread:
+        def _run() -> None:
+            try:
+                target(*target_args, processes)
+            except BaseException as exc:  # noqa: BLE001
+                logging.exception("Thread '%s' terminou com erro.", name)
+                with errors_lock:
+                    thread_errors.append((name, exc))
+
+        return threading.Thread(target=_run, name=name)
 
     if not args.skip_build:
         run_build(frontend_path)
@@ -206,19 +234,13 @@ def main() -> None:
         logging.info("Build do front-end foi pulado pelo usuário.")
 
     if not args.skip_start:
-        threads.append(
-            threading.Thread(target=run_start, args=(frontend_path,), name="frontend-start")
-        )
+        threads.append(thread_wrapper("frontend-start", run_start, frontend_path))
     else:
         logging.info("Inicialização do front-end foi pulada pelo usuário.")
 
     if not args.skip_baileys:
         threads.append(
-            threading.Thread(
-                target=run_baileys_service,
-                args=(args, frontend_path),
-                name="baileys-service",
-            )
+            thread_wrapper("baileys-service", run_baileys_service, args, frontend_path)
         )
     else:
         logging.info("Inicialização do serviço Baileys foi pulada pelo usuário.")
@@ -231,6 +253,31 @@ def main() -> None:
             thread.join()
     except KeyboardInterrupt:
         logging.warning("Execução interrompida pelo usuário. Encerrando serviços.")
+        for process in processes:
+            if process.poll() is None:
+                logging.info("Enviando sinal de término para PID %s", process.pid)
+                process.terminate()
+        for process in processes:
+            if process.poll() is None:
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    logging.warning(
+                        "Processo PID %s não encerrou após terminate(). Enviando kill().",
+                        process.pid,
+                    )
+                    process.kill()
+        raise SystemExit(1)
+
+    if thread_errors:
+        for name, exc in thread_errors:
+            if isinstance(exc, subprocess.CalledProcessError):
+                logging.error(
+                    "Comando no thread '%s' falhou com código %s.", name, exc.returncode
+                )
+            else:
+                logging.error("Thread '%s' terminou com exceção: %s", name, exc)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
