@@ -218,6 +218,22 @@ def main() -> None:
     thread_errors: List[Tuple[str, BaseException]] = []
     errors_lock = threading.Lock()
 
+    def cleanup_processes() -> None:
+        for process in processes:
+            if process.poll() is None:
+                logging.info("Enviando sinal de término para PID %s", process.pid)
+                process.terminate()
+        for process in processes:
+            if process.poll() is None:
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    logging.warning(
+                        "Processo PID %s não encerrou após terminate(). Enviando kill().",
+                        process.pid,
+                    )
+                    process.kill()
+
     def thread_wrapper(name: str, target, *target_args) -> threading.Thread:
         def _run() -> None:
             try:
@@ -250,34 +266,31 @@ def main() -> None:
         thread.start()
 
     try:
-        for thread in threads:
-            thread.join()
+        while threads:
+            for thread in list(threads):
+                thread.join(timeout=0.2)
+                if not thread.is_alive():
+                    threads.remove(thread)
+            with errors_lock:
+                if thread_errors:
+                    break
     except KeyboardInterrupt:
         logging.warning("Execução interrompida pelo usuário. Encerrando serviços.")
-        for process in processes:
-            if process.poll() is None:
-                logging.info("Enviando sinal de término para PID %s", process.pid)
-                process.terminate()
-        for process in processes:
-            if process.poll() is None:
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    logging.warning(
-                        "Processo PID %s não encerrou após terminate(). Enviando kill().",
-                        process.pid,
-                    )
-                    process.kill()
+        cleanup_processes()
         raise SystemExit(1)
 
-    if thread_errors:
-        for name, exc in thread_errors:
+    with errors_lock:
+        recorded_errors = list(thread_errors)
+
+    if recorded_errors:
+        for name, exc in recorded_errors:
             if isinstance(exc, subprocess.CalledProcessError):
                 logging.error(
                     "Comando no thread '%s' falhou com código %s.", name, exc.returncode
                 )
             else:
                 logging.error("Thread '%s' terminou com exceção: %s", name, exc)
+        cleanup_processes()
         raise SystemExit(1)
 
 
