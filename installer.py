@@ -181,11 +181,12 @@ def run_baileys_service(
     processes: List[subprocess.Popen],
 ) -> None:
     env = os.environ.copy()
-    env.setdefault("BAILEYS_PORT", str(args.port))
+    env["BAILEYS_PORT"] = str(args.port)
     command = get_baileys_command(args, frontend_path)
+    baileys_port = env["BAILEYS_PORT"]
     logging.info(
-        "Iniciando serviço Baileys na porta %s com comando: %s",
-        args.port,
+        "Iniciando serviço Baileys com BAILEYS_PORT=%s e comando: %s",
+        baileys_port,
         " ".join(command),
     )
     run_command_async(command, processes, cwd=frontend_path, env=env)
