@@ -160,11 +160,12 @@ def get_baileys_command(args: argparse.Namespace, frontend_path: Path) -> List[s
 
 def run_baileys_service(args: argparse.Namespace, frontend_path: Path) -> None:
     env = os.environ.copy()
-    env.setdefault("BAILEYS_PORT", str(args.port))
+    env["BAILEYS_PORT"] = str(args.port)
     command = get_baileys_command(args, frontend_path)
+    baileys_port = env["BAILEYS_PORT"]
     logging.info(
-        "Iniciando serviço Baileys na porta %s com comando: %s",
-        args.port,
+        "Iniciando serviço Baileys com BAILEYS_PORT=%s e comando: %s",
+        baileys_port,
         " ".join(command),
     )
     try:
