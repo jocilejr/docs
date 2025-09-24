@@ -8,7 +8,6 @@ const port = process.env.PORT || 3000;
 const baileysPort = process.env.BAILEYS_PORT || 3002;
 const publicDir = path.resolve(__dirname, '..', 'public');
 const indexPath = path.join(publicDir, 'index.html');
-const openApiPath = path.resolve(__dirname, '..', '..', 'docs', 'swagger', 'openapi.yaml');
 
 const shouldProxy = (pathname) => {
   const apiPrefixes = ['/qrcode', '/instances', '/messages'];
@@ -78,14 +77,6 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    if (url === '/openapi.yaml') {
-      const spec = fs.readFileSync(openApiPath);
-      res.writeHead(200, { 'Content-Type': 'application/yaml; charset=utf-8' });
-      res.end(spec);
-      logRequest(req, 200);
-      return;
-    }
-
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Not Found\n');
     logRequest(req, 404);
@@ -98,7 +89,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`Servidor do Swagger UI disponível em http://localhost:${port}`);
+  console.log(`Painel Baileys disponível em http://localhost:${port}`);
 });
 
 process.on('SIGINT', () => {
