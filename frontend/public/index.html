@@ -49,6 +49,38 @@
         color: #243b53;
       }
 
+      .tab-header {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .tab-button {
+        background-color: #e4e7eb;
+        color: #243b53;
+        border: 1px solid #cbd2d9;
+        padding: 8px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .tab-button.active {
+        background-color: #2563eb;
+        border-color: #1d4ed8;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
       .form-grid {
         display: grid;
         gap: 16px;
@@ -134,6 +166,119 @@
         margin-top: -8px;
         margin-bottom: 12px;
       }
+
+      .endpoints-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .endpoint-card {
+        border: 1px solid #e4e7eb;
+        border-radius: 6px;
+        padding: 16px;
+        background: #fdfefe;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+      }
+
+      .endpoint-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+
+      .method-badge {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.04em;
+      }
+
+      .method-get {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #047857;
+      }
+
+      .method-post {
+        background-color: rgba(37, 99, 235, 0.15);
+        color: #1d4ed8;
+      }
+
+      .endpoint-path {
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 13px;
+        color: #1f2933;
+        background: #f8fafc;
+        border: 1px solid #e4e7eb;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+
+      .endpoint-description {
+        margin: 0 0 12px 0;
+        color: #52606d;
+        font-size: 13px;
+      }
+
+      .copy-row {
+        margin-bottom: 12px;
+      }
+
+      .copy-row:last-of-type {
+        margin-bottom: 0;
+      }
+
+      .copy-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #52606d;
+        margin-bottom: 6px;
+      }
+
+      .copy-block {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .copy-block code,
+      .copy-block pre {
+        flex: 1;
+        margin: 0;
+        background: #f8fafc;
+        border: 1px solid #e4e7eb;
+        border-radius: 4px;
+        padding: 10px;
+        font-size: 13px;
+        color: #1f2933;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .copy-button {
+        background-color: #334155;
+        border: 1px solid #1e293b;
+        color: #ffffff;
+        padding: 0 14px;
+        font-size: 13px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .copy-button:hover {
+        background-color: #1e293b;
+      }
+
+      .endpoint-warning {
+        margin: 12px 0 0 0;
+        font-size: 12px;
+        color: #b91c1c;
+      }
     </style>
   </head>
   <body>
@@ -169,68 +314,95 @@
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section" data-panel="create-instance">
         <h3>Criar instância</h3>
-        <form id="create-instance-form">
-          <label for="instance-id">Identificador da instância</label>
-          <input id="instance-id" name="instance-id" placeholder="instancia-01" required />
+        <div class="tab-header">
+          <button type="button" class="tab-button active" data-target="form">Formulário</button>
+          <button type="button" class="tab-button" data-target="endpoints">Endpoints</button>
+        </div>
+        <div class="tab-content active" data-tab="form">
+          <form id="create-instance-form">
+            <label for="instance-id">Identificador da instância</label>
+            <input id="instance-id" name="instance-id" placeholder="instancia-01" required />
 
-          <label for="instance-name">Nome (opcional)</label>
-          <input id="instance-name" name="instance-name" placeholder="Instância principal" />
+            <label for="instance-name">Nome (opcional)</label>
+            <input id="instance-name" name="instance-name" placeholder="Instância principal" />
 
-          <label for="instance-webhook">Webhook URL (opcional)</label>
-          <input id="instance-webhook" name="instance-webhook" placeholder="https://exemplo.com/webhooks" />
+            <label for="instance-webhook">Webhook URL (opcional)</label>
+            <input id="instance-webhook" name="instance-webhook" placeholder="https://exemplo.com/webhooks" />
 
-          <button type="submit">Criar instância</button>
-        </form>
-        <div class="result-container">
-          <pre id="create-instance-result">Aguardando envio...</pre>
+            <button type="submit">Criar instância</button>
+          </form>
+          <div class="result-container">
+            <pre id="create-instance-result">Aguardando envio...</pre>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="endpoints">
+          <div class="endpoints-container" id="create-instance-endpoints"></div>
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section" data-panel="qr-code">
         <h3>Recuperar QR Code</h3>
-        <form id="qr-code-form">
-          <label for="qr-instance-id">Identificador da instância</label>
-          <input id="qr-instance-id" name="qr-instance-id" placeholder="instancia-01" required />
+        <div class="tab-header">
+          <button type="button" class="tab-button active" data-target="form">Formulário</button>
+          <button type="button" class="tab-button" data-target="endpoints">Endpoints</button>
+        </div>
+        <div class="tab-content active" data-tab="form">
+          <form id="qr-code-form">
+            <label for="qr-instance-id">Identificador da instância</label>
+            <input id="qr-instance-id" name="qr-instance-id" placeholder="instancia-01" required />
 
-          <button type="submit">Buscar QR Code</button>
-        </form>
-        <div class="result-container">
-          <pre id="qr-code-result">Aguardando envio...</pre>
-          <div class="qr-preview" id="qr-code-preview"></div>
+            <button type="submit">Buscar QR Code</button>
+          </form>
+          <div class="result-container">
+            <pre id="qr-code-result">Aguardando envio...</pre>
+            <div class="qr-preview" id="qr-code-preview"></div>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="endpoints">
+          <div class="endpoints-container" id="qr-code-endpoints"></div>
         </div>
       </div>
 
-      <div class="panel-section">
+      <div class="panel-section" data-panel="messages">
         <h3>Enviar mensagem</h3>
-        <form id="send-message-form">
-          <label for="message-instance-id">Identificador da instância</label>
-          <input id="message-instance-id" name="message-instance-id" placeholder="instancia-01" required />
+        <div class="tab-header">
+          <button type="button" class="tab-button active" data-target="form">Formulário</button>
+          <button type="button" class="tab-button" data-target="endpoints">Endpoints</button>
+        </div>
+        <div class="tab-content active" data-tab="form">
+          <form id="send-message-form">
+            <label for="message-instance-id">Identificador da instância</label>
+            <input id="message-instance-id" name="message-instance-id" placeholder="instancia-01" required />
 
-          <label for="message-to">Número do destinatário (DDD + número)</label>
-          <input id="message-to" name="message-to" placeholder="5599999999999" required />
+            <label for="message-to">Número do destinatário (DDD + número)</label>
+            <input id="message-to" name="message-to" placeholder="5599999999999" required />
 
-          <label for="message-type">Tipo de mensagem</label>
-          <select id="message-type" name="message-type">
-            <option value="text" selected>text</option>
-            <option value="media">media</option>
-            <option value="template">template</option>
-          </select>
+            <label for="message-type">Tipo de mensagem</label>
+            <select id="message-type" name="message-type">
+              <option value="text" selected>text</option>
+              <option value="media">media</option>
+              <option value="template">template</option>
+            </select>
 
-          <label for="message-payload">Payload da mensagem (JSON)</label>
-          <textarea
-            id="message-payload"
-            name="message-payload"
-            placeholder='{"text": "Olá, esta é uma mensagem automática."}'
-            required
-          ></textarea>
-          <p class="inline-hint">Informe o objeto JSON conforme o tipo selecionado.</p>
+            <label for="message-payload">Payload da mensagem (JSON)</label>
+            <textarea
+              id="message-payload"
+              name="message-payload"
+              placeholder='{"text": "Olá, esta é uma mensagem automática."}'
+              required
+            ></textarea>
+            <p class="inline-hint">Informe o objeto JSON conforme o tipo selecionado.</p>
 
-          <button type="submit">Enviar mensagem</button>
-        </form>
-        <div class="result-container">
-          <pre id="send-message-result">Aguardando envio...</pre>
+            <button type="submit">Enviar mensagem</button>
+          </form>
+          <div class="result-container">
+            <pre id="send-message-result">Aguardando envio...</pre>
+          </div>
+        </div>
+        <div class="tab-content" data-tab="endpoints">
+          <div class="endpoints-container" id="message-endpoints"></div>
         </div>
       </div>
     </div>
@@ -249,6 +421,19 @@
         const qrPreview = document.getElementById('qr-code-preview');
         const messageForm = document.getElementById('send-message-form');
         const messageResult = document.getElementById('send-message-result');
+        const createInstanceIdInput = document.getElementById('instance-id');
+        const createInstanceNameInput = document.getElementById('instance-name');
+        const createInstanceWebhookInput = document.getElementById('instance-webhook');
+        const qrInstanceIdInput = document.getElementById('qr-instance-id');
+        const messageInstanceIdInput = document.getElementById('message-instance-id');
+        const messageToInput = document.getElementById('message-to');
+        const messageTypeSelect = document.getElementById('message-type');
+        const messagePayloadInput = document.getElementById('message-payload');
+        const createEndpointsContainer = document.getElementById('create-instance-endpoints');
+        const qrEndpointsContainer = document.getElementById('qr-code-endpoints');
+        const messageEndpointsContainer = document.getElementById('message-endpoints');
+
+        setupTabs();
 
         try {
           const savedServer = localStorage.getItem('baileys-dashboard-server');
@@ -272,9 +457,6 @@
           }
         };
 
-        serverInput.addEventListener('change', persistSettings);
-        tokenInput.addEventListener('change', persistSettings);
-
         const getSelectedServer = () => serverInput.value?.trim();
 
         const buildUrl = (path) => {
@@ -289,20 +471,384 @@
           return `${normalizedBase}${path}`;
         };
 
+        const normalizeToken = () => {
+          const token = tokenInput.value.trim();
+          if (!token) {
+            return '';
+          }
+          return token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`;
+        };
+
         const buildHeaders = (contentType = 'application/json') => {
           const headers = { Accept: 'application/json' };
           if (contentType) {
             headers['Content-Type'] = contentType;
           }
-          const token = tokenInput.value.trim();
+          const token = normalizeToken();
           if (token) {
-            headers.Authorization = token.toLowerCase().startsWith('bearer ')
-              ? token
-              : `Bearer ${token}`;
+            headers.Authorization = token;
             persistSettings();
           }
           return headers;
         };
+
+        const parseJsonInput = (value) => {
+          const trimmed = value?.trim();
+          if (!trimmed) {
+            return { data: null, error: null };
+          }
+          try {
+            return { data: JSON.parse(trimmed), error: null };
+          } catch (error) {
+            return { data: null, error };
+          }
+        };
+
+        const getDefaultMessagePayload = (type) => {
+          switch (type) {
+            case 'media':
+              return {
+                type: 'image',
+                url: 'https://exemplo.com/imagem.png',
+                caption: 'Legenda opcional',
+              };
+            case 'template':
+              return {
+                name: 'template_exemplo',
+                language: 'pt_BR',
+                components: [],
+              };
+            default:
+              return { text: 'Olá, esta é uma mensagem automática.' };
+          }
+        };
+
+        const normalizeAbsoluteUrl = (url) => {
+          if (!url) {
+            return '';
+          }
+          if (/^https?:\/\//i.test(url)) {
+            return url;
+          }
+          const origin = window.location.origin.replace(/\/$/, '');
+          if (url.startsWith('/')) {
+            return `${origin}${url}`;
+          }
+          return `${origin}/${url}`;
+        };
+
+        const buildCurlCommand = (method, url, payload = null) => {
+          const parts = [`curl -X ${method.toUpperCase()} "${normalizeAbsoluteUrl(url)}"`];
+          parts.push('-H "Accept: application/json"');
+          const token = normalizeToken();
+          if (token) {
+            parts.push(`-H "Authorization: ${token}"`);
+          }
+          if (payload) {
+            parts.push('-H "Content-Type: application/json"');
+            parts.push(`-d '${payload}'`);
+          }
+          return parts.reduce((command, part, index) => {
+            if (index === 0) {
+              return part;
+            }
+            return `${command} \\\n+  ${part}`;
+          }, '');
+        };
+
+        const createCopyableRow = ({ label, value, displayValue, format = 'code' }) => {
+          const row = document.createElement('div');
+          row.className = 'copy-row';
+
+          const labelEl = document.createElement('span');
+          labelEl.className = 'copy-label';
+          labelEl.textContent = label;
+          row.appendChild(labelEl);
+
+          const block = document.createElement('div');
+          block.className = 'copy-block';
+
+          const displayElement = document.createElement(format === 'pre' ? 'pre' : 'code');
+          displayElement.textContent = displayValue ?? value ?? '';
+          block.appendChild(displayElement);
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'copy-button';
+          button.dataset.clipboard = value ?? '';
+          button.dataset.defaultLabel = 'Copiar';
+          button.textContent = 'Copiar';
+          block.appendChild(button);
+
+          row.appendChild(block);
+          return row;
+        };
+
+        const createEndpointCard = ({ method, path, description, url, payload, curl, warning }) => {
+          const card = document.createElement('div');
+          card.className = 'endpoint-card';
+
+          const header = document.createElement('div');
+          header.className = 'endpoint-header';
+
+          const badge = document.createElement('span');
+          badge.className = `method-badge method-${method.toLowerCase()}`;
+          badge.textContent = method.toUpperCase();
+          header.appendChild(badge);
+
+          const pathElement = document.createElement('code');
+          pathElement.className = 'endpoint-path';
+          pathElement.textContent = path;
+          header.appendChild(pathElement);
+
+          card.appendChild(header);
+
+          if (description) {
+            const descriptionEl = document.createElement('p');
+            descriptionEl.className = 'endpoint-description';
+            descriptionEl.textContent = description;
+            card.appendChild(descriptionEl);
+          }
+
+          card.appendChild(
+            createCopyableRow({
+              label: 'URL completa',
+              value: url,
+              displayValue: url,
+              format: 'code',
+            })
+          );
+
+          if (payload) {
+            card.appendChild(
+              createCopyableRow({
+                label: payload.label || 'Payload JSON',
+                value: payload.copyValue ?? payload.value,
+                displayValue: payload.value,
+                format: 'pre',
+              })
+            );
+          }
+
+          if (curl) {
+            card.appendChild(
+              createCopyableRow({
+                label: 'Exemplo cURL',
+                value: curl,
+                displayValue: curl,
+                format: 'pre',
+              })
+            );
+          }
+
+          if (warning) {
+            const warningEl = document.createElement('p');
+            warningEl.className = 'endpoint-warning';
+            warningEl.textContent = warning;
+            card.appendChild(warningEl);
+          }
+
+          return card;
+        };
+
+        const renderEndpointCards = (container, cards) => {
+          if (!container) {
+            return;
+          }
+          container.innerHTML = '';
+          if (!cards.length) {
+            const emptyState = document.createElement('p');
+            emptyState.className = 'endpoint-description';
+            emptyState.textContent = 'Preencha o formulário para visualizar as requisições.';
+            container.appendChild(emptyState);
+            return;
+          }
+          cards.forEach((card) => {
+            container.appendChild(createEndpointCard(card));
+          });
+        };
+
+        const updateAllEndpointPreviews = () => {
+          if (!createEndpointsContainer || !qrEndpointsContainer || !messageEndpointsContainer) {
+            return;
+          }
+
+          const resolvedInstanceId =
+            messageInstanceIdInput.value.trim() ||
+            qrInstanceIdInput.value.trim() ||
+            createInstanceIdInput.value.trim() ||
+            'instancia-01';
+
+          const createInstanceIdPreview = createInstanceIdInput.value.trim() || resolvedInstanceId;
+          const createName = createInstanceNameInput.value.trim();
+          const createWebhook = createInstanceWebhookInput.value.trim();
+
+          const createPayload = { id: createInstanceIdPreview };
+          if (createName || createWebhook) {
+            createPayload.metadata = {};
+            if (createName) {
+              createPayload.metadata.name = createName;
+            }
+            if (createWebhook) {
+              createPayload.metadata.webhookUrl = createWebhook;
+            }
+          }
+
+          const createUrl = buildUrl('/instances');
+          renderEndpointCards(createEndpointsContainer, [
+            {
+              method: 'POST',
+              path: '/instances',
+              description: 'Cria uma nova instância e registra metadados opcionais.',
+              url: createUrl,
+              payload: {
+                value: JSON.stringify(createPayload, null, 2),
+              },
+              curl: buildCurlCommand('POST', createUrl, JSON.stringify(createPayload)),
+            },
+          ]);
+
+          const qrInstanceIdPreview = qrInstanceIdInput.value.trim() || resolvedInstanceId;
+          const qrPath = `/qrcode?instanceId=${encodeURIComponent(qrInstanceIdPreview)}`;
+          const qrUrl = buildUrl(qrPath);
+          renderEndpointCards(qrEndpointsContainer, [
+            {
+              method: 'GET',
+              path: qrPath,
+              description: 'Recupera o QR Code da instância para autenticação.',
+              url: qrUrl,
+              curl: buildCurlCommand('GET', qrUrl),
+            },
+          ]);
+
+          const messageInstanceIdPreview = messageInstanceIdInput.value.trim() || resolvedInstanceId;
+          const messageToPreview = messageToInput.value.trim() || '5599999999999';
+          const messageType = messageTypeSelect ? messageTypeSelect.value : 'text';
+          const parsedMessage = parseJsonInput(messagePayloadInput.value);
+          let messageWarning = null;
+          let messageBody = parsedMessage.data;
+          if (parsedMessage.error) {
+            messageWarning = 'Payload JSON inválido. Ajuste o campo antes de enviar.';
+          }
+          if (!messageBody) {
+            messageBody = getDefaultMessagePayload(messageType);
+          }
+
+          const messagePayload = {
+            instanceId: messageInstanceIdPreview,
+            to: messageToPreview,
+            type: messageType,
+            message: messageBody,
+          };
+
+          const messageUrl = buildUrl('/messages');
+          renderEndpointCards(messageEndpointsContainer, [
+            {
+              method: 'POST',
+              path: '/messages',
+              description: 'Envia uma mensagem utilizando a instância selecionada.',
+              url: messageUrl,
+              payload: {
+                value: JSON.stringify(messagePayload, null, 2),
+              },
+              curl: buildCurlCommand('POST', messageUrl, JSON.stringify(messagePayload)),
+              warning: messageWarning,
+            },
+          ]);
+        };
+
+        serverInput.addEventListener('change', () => {
+          persistSettings();
+          updateAllEndpointPreviews();
+        });
+        tokenInput.addEventListener('change', () => {
+          persistSettings();
+          updateAllEndpointPreviews();
+        });
+        serverInput.addEventListener('input', updateAllEndpointPreviews);
+        tokenInput.addEventListener('input', updateAllEndpointPreviews);
+
+        const updateInputsToPreview = [
+          createInstanceIdInput,
+          createInstanceNameInput,
+          createInstanceWebhookInput,
+          qrInstanceIdInput,
+          messageInstanceIdInput,
+          messageToInput,
+          messagePayloadInput,
+        ];
+
+        updateInputsToPreview.forEach((input) => {
+          if (!input) {
+            return;
+          }
+          input.addEventListener('input', updateAllEndpointPreviews);
+        });
+
+        if (messageTypeSelect) {
+          messageTypeSelect.addEventListener('change', updateAllEndpointPreviews);
+        }
+
+        const copyFeedbackTimers = new WeakMap();
+
+        const copyToClipboard = async (value) => {
+          if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(value);
+          }
+
+          const textarea = document.createElement('textarea');
+          textarea.value = value;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.top = '-1000px';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+
+          textarea.focus();
+          textarea.select();
+
+          try {
+            document.execCommand('copy');
+          } finally {
+            document.body.removeChild(textarea);
+          }
+        };
+
+        document.addEventListener('click', async (event) => {
+          const button = event.target.closest('.copy-button');
+          if (!button) {
+            return;
+          }
+
+          const value = button.dataset.clipboard ?? '';
+          const defaultLabel = button.dataset.defaultLabel || 'Copiar';
+
+          if (copyFeedbackTimers.has(button)) {
+            clearTimeout(copyFeedbackTimers.get(button));
+          }
+
+          try {
+            await copyToClipboard(value);
+            button.textContent = 'Copiado!';
+            button.disabled = true;
+            const timeoutId = setTimeout(() => {
+              button.disabled = false;
+              button.textContent = defaultLabel;
+              copyFeedbackTimers.delete(button);
+            }, 2000);
+            copyFeedbackTimers.set(button, timeoutId);
+          } catch (error) {
+            console.warn('Não foi possível copiar o conteúdo:', error);
+            button.textContent = 'Falha ao copiar';
+            button.disabled = true;
+            const timeoutId = setTimeout(() => {
+              button.disabled = false;
+              button.textContent = defaultLabel;
+              copyFeedbackTimers.delete(button);
+            }, 2000);
+            copyFeedbackTimers.set(button, timeoutId);
+          }
+        });
 
         const renderResult = async (response, target) => {
           let text = '';
@@ -337,9 +883,9 @@
           createResult.textContent = 'Enviando...';
           createResult.classList.remove('error');
 
-          const id = document.getElementById('instance-id').value.trim();
-          const name = document.getElementById('instance-name').value.trim();
-          const webhook = document.getElementById('instance-webhook').value.trim();
+          const id = createInstanceIdInput.value.trim();
+          const name = createInstanceNameInput.value.trim();
+          const webhook = createInstanceWebhookInput.value.trim();
 
           const payload = { id };
           if (name || webhook) {
@@ -359,6 +905,7 @@
             createResult.classList.add('error');
             createResult.textContent = `Erro ao enviar requisição: ${error.message}`;
           }
+          updateAllEndpointPreviews();
         });
 
         qrForm.addEventListener('submit', async (event) => {
@@ -367,7 +914,7 @@
           qrResult.classList.remove('error');
           qrPreview.innerHTML = '';
 
-          const instanceId = document.getElementById('qr-instance-id').value.trim();
+          const instanceId = qrInstanceIdInput.value.trim();
           const url = buildUrl(`/qrcode?instanceId=${encodeURIComponent(instanceId)}`);
 
           try {
@@ -404,6 +951,7 @@
             qrResult.classList.add('error');
             qrResult.textContent = `Erro ao buscar QR Code: ${error.message}`;
           }
+          updateAllEndpointPreviews();
         });
 
         messageForm.addEventListener('submit', async (event) => {
@@ -411,17 +959,15 @@
           messageResult.textContent = 'Enviando mensagem...';
           messageResult.classList.remove('error');
 
-          const instanceId = document.getElementById('message-instance-id').value.trim();
-          const to = document.getElementById('message-to').value.trim();
-          const type = document.getElementById('message-type').value;
-          const rawPayload = document.getElementById('message-payload').value.trim();
+          const instanceId = messageInstanceIdInput.value.trim();
+          const to = messageToInput.value.trim();
+          const type = messageTypeSelect.value;
+          const rawPayload = messagePayloadInput.value.trim();
 
-          let messagePayload;
-          try {
-            messagePayload = rawPayload ? JSON.parse(rawPayload) : {};
-          } catch (error) {
+          const parsedPayload = parseJsonInput(rawPayload);
+          if (parsedPayload.error) {
             messageResult.classList.add('error');
-            messageResult.textContent = `Payload inválido: ${error.message}`;
+            messageResult.textContent = `Payload inválido: ${parsedPayload.error.message}`;
             return;
           }
 
@@ -429,7 +975,7 @@
             instanceId,
             to,
             type,
-            message: messagePayload,
+            message: parsedPayload.data || {},
           };
 
           try {
@@ -443,6 +989,31 @@
             messageResult.classList.add('error');
             messageResult.textContent = `Erro ao enviar mensagem: ${error.message}`;
           }
+          updateAllEndpointPreviews();
+        });
+
+        updateAllEndpointPreviews();
+      }
+
+      function setupTabs() {
+        const sections = document.querySelectorAll('.panel-section');
+        sections.forEach((section) => {
+          const buttons = section.querySelectorAll('.tab-button');
+          const contents = section.querySelectorAll('.tab-content');
+          if (!buttons.length || !contents.length) {
+            return;
+          }
+          buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+              const target = button.dataset.target;
+              buttons.forEach((btn) => {
+                btn.classList.toggle('active', btn === button);
+              });
+              contents.forEach((content) => {
+                content.classList.toggle('active', content.dataset.tab === target);
+              });
+            });
+          });
         });
       }
     </script>
