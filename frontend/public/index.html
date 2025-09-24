@@ -474,6 +474,34 @@
           }
         }
 
+        function guessDefaultBaseUrl() {
+          if (sanitizeBaseUrl(serverInput.value)) {
+            return;
+          }
+
+          try {
+            const { protocol, hostname, port } = window.location;
+            if (!protocol || !hostname) {
+              return;
+            }
+
+            let candidate = '';
+
+            if (port === '3000') {
+              candidate = `${protocol}//${hostname}:3002`;
+            } else if (!port) {
+              candidate = `${protocol}//${hostname}:3002`;
+            }
+
+            if (candidate) {
+              serverInput.value = sanitizeBaseUrl(candidate);
+              persistSettings();
+            }
+          } catch (error) {
+            console.warn('Não foi possível determinar a URL padrão do serviço Baileys:', error);
+          }
+        }
+
         function getBaseUrl() {
           return sanitizeBaseUrl(serverInput.value);
         }
@@ -1064,7 +1092,7 @@
                 if (imageSrc) {
                   qrImage.src = imageSrc;
                   qrImage.classList.remove('hidden');
-fix-qr-code-scanning-failure-z59hid
+fix-qr-code-scanning-failure-5b4drq
 
 
                   const expiresIn = extractExpiresIn(data);
@@ -1080,7 +1108,8 @@ fix-qr-code-scanning-failure-z59hid
                 }
 
                 console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
-fix-qr-code-scanning-failure-z59hid
+fix-qr-code-scanning-failure-5b4drq
+
               }
 
               const message =
@@ -1096,6 +1125,7 @@ fix-qr-code-scanning-failure-z59hid
                 return;
               }
 
+fix-qr-code-scanning-failure-5b4drq
 
               scheduleNextFetch(7000);
             } catch (error) {
@@ -1137,21 +1167,30 @@ fix-qr-code-scanning-failure-z59hid
 
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
-        const handleServerChange = () => {
+fix-qr-code-scanning-failure-5b4drq
+        const handleServerChange = async () => {
+
           const sanitized = sanitizeBaseUrl(serverInput.value);
           if (sanitized !== serverInput.value) {
             serverInput.value = sanitized;
           }
           persistSettings();
-          renderInstances();
+          await loadInstances();
         };
 
-        serverInput.addEventListener('change', handleServerChange);
-        serverInput.addEventListener('blur', handleServerChange);
+        const handleServerChangeEvent = () => {
+          handleServerChange().catch((error) => {
+            console.error('Erro ao atualizar servidor Baileys configurado:', error);
+          });
+        };
+
+        serverInput.addEventListener('change', handleServerChangeEvent);
+        serverInput.addEventListener('blur', handleServerChangeEvent);
         tokenInput.addEventListener('change', persistSettings);
         tokenInput.addEventListener('blur', persistSettings);
 
         loadSettings();
+        guessDefaultBaseUrl();
         loadInstances();
       })();
     </script>
