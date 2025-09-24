@@ -2,11 +2,18 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { URL } = require('url');
 
 const port = process.env.PORT || 3000;
+const baileysPort = process.env.BAILEYS_PORT || 3002;
 const publicDir = path.resolve(__dirname, '..', 'public');
 const indexPath = path.join(publicDir, 'index.html');
 const openApiPath = path.resolve(__dirname, '..', '..', 'docs', 'swagger', 'openapi.yaml');
+
+const shouldProxy = (pathname) => {
+  const apiPrefixes = ['/qrcode', '/instances', '/messages'];
+  return apiPrefixes.some((prefix) => pathname.startsWith(prefix));
+};
 
 const logRequest = (req, statusCode) => {
   const timestamp = new Date().toISOString();
@@ -14,6 +21,43 @@ const logRequest = (req, statusCode) => {
 };
 
 const server = http.createServer((req, res) => {
+  const requestUrl = new URL(req.url, `http://localhost:${port}`);
+  const { pathname } = requestUrl;
+
+  if (shouldProxy(pathname)) {
+    const proxyOptions = {
+      hostname: 'localhost',
+      port: baileysPort,
+      path: req.url,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: `localhost:${baileysPort}`,
+      },
+    };
+
+    const proxyReq = http.request(proxyOptions, (proxyRes) => {
+      const headers = { ...proxyRes.headers };
+      res.writeHead(proxyRes.statusCode || 502, headers);
+      proxyRes.pipe(res);
+      proxyRes.on('end', () => {
+        logRequest(req, proxyRes.statusCode || 502);
+      });
+    });
+
+    proxyReq.on('error', (error) => {
+      console.error('Erro ao encaminhar requisição para o Baileys:', error);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
+      }
+      res.end('Bad Gateway\n');
+      logRequest(req, 502);
+    });
+
+    req.pipe(proxyReq);
+    return;
+  }
+
   if (req.method !== 'GET') {
     res.writeHead(405, {
       'Content-Type': 'text/plain; charset=utf-8',

@@ -8,7 +8,9 @@ servers:
   - url: https://api.exemplo.com
     description: Ambiente de produção
   - url: http://localhost:3000
-    description: Ambiente de desenvolvimento
+    description: Ambiente de desenvolvimento (proxy para http://localhost:3002)
+  - url: http://localhost:3002
+    description: Servidor Baileys direto para testes locais
 security:
   - bearerAuth: []
 tags:
