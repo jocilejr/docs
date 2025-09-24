@@ -178,13 +178,29 @@ class BaileysManager {
     }
 
     if (update.qr) {
-      const qrDataUrl = await QRCode.toDataURL(update.qr);
-      const base64 = qrDataUrl.split(',')[1];
-      session.qr = {
-        type: 'base64',
-        value: base64,
-        expiresAt: Date.now() + QR_EXPIRATION_MS,
+      const expiresAt = Date.now() + QR_EXPIRATION_MS;
+      const qrInfo = {
+        raw: update.qr,
+        expiresAt,
+        image: null,
       };
+
+      try {
+        const qrDataUrl = await QRCode.toDataURL(update.qr);
+        const [prefix, value] = qrDataUrl.split(',');
+        if (value) {
+          const mime = prefix?.match(/^data:(.*?);/i)?.[1] || 'image/png';
+          qrInfo.image = {
+            type: 'base64',
+            mime,
+            value,
+          };
+        }
+      } catch (error) {
+        console.warn(`Não foi possível gerar imagem do QR para ${instanceId}:`, error.message);
+      }
+
+      session.qr = qrInfo;
       await this.store.updateStatus(instanceId, 'pending_qr');
     }
 
@@ -244,15 +260,35 @@ class BaileysManager {
     if (!session?.qr) {
       return null;
     }
+    if (Date.now() >= session.qr.expiresAt) {
+      session.qr = null;
+      return null;
+    }
+
     const expiresIn = Math.max(0, Math.floor((session.qr.expiresAt - Date.now()) / 1000));
-    return {
+    const payload = {
       instanceId,
-      image: {
-        type: session.qr.type,
-        value: session.qr.value,
-        expiresIn,
-      },
+      expiresIn,
     };
+
+    if (session.qr.image?.value) {
+      payload.image = {
+        type: session.qr.image.type,
+        mime: session.qr.image.mime,
+        value: session.qr.image.value,
+        expiresIn,
+      };
+    }
+
+    if (session.qr.raw) {
+      payload.code = {
+        format: 'raw',
+        value: session.qr.raw,
+        expiresIn,
+      };
+    }
+
+    return payload;
   }
 }
 
