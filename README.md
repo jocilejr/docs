@@ -5,6 +5,8 @@ Este repositório contém a especificação OpenAPI para operações de autentic
 ## Estrutura
 
 - `docs/swagger/openapi.yaml`: definição completa da API no formato OpenAPI 3.0.3.
+- `frontend/baileys-service.js`: serviço HTTP que integra com o Baileys e expõe as rotas documentadas.
+- `frontend/data/`: diretório de persistência de instâncias e credenciais das sessões Baileys.
 
 ## Como validar a especificação
 
@@ -21,6 +23,44 @@ Este repositório contém a especificação OpenAPI para operações de autentic
    ```
 
 O comando deve ser executado na raiz do repositório.
+
+## Executando o serviço Baileys
+
+O arquivo `frontend/baileys-service.js` implementa um servidor Express que:
+
+- inicializa sessões do WhatsApp utilizando `@whiskeysockets/baileys`;
+- persiste credenciais em `frontend/data/sessions/<instanceId>/` e o catálogo de instâncias em `frontend/data/instances.json`;
+- expõe as rotas `GET /qrcode`, CRUD de `/instances` e `POST /messages`, seguindo os schemas definidos em `docs/swagger/openapi.yaml`;
+- exige autenticação Bearer quando a variável `API_BEARER_TOKEN` estiver definida.
+
+### Pré-requisitos
+
+- Node.js 18+ (necessário para o runtime do serviço e suporte ao `fetch` nativo utilizado pelo Baileys);
+- npm para instalação das dependências do diretório `frontend/`;
+- acesso de escrita ao diretório `frontend/data/` para persistir credenciais e metadados das instâncias.
+
+### Configuração
+
+1. Instale as dependências:
+
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. (Opcional) Defina um token para proteger as rotas HTTP:
+
+   ```bash
+   export API_BEARER_TOKEN="coloque-um-token-seguro"
+   ```
+
+3. Inicie o serviço (a porta pode ser ajustada via `BAILEYS_PORT`):
+
+   ```bash
+   BAILEYS_PORT=3002 node baileys-service.js
+   ```
+
+O serviço criará automaticamente as estruturas necessárias em `frontend/data/`. Os arquivos dentro de `frontend/data/sessions/` contêm as credenciais criptografadas do Baileys para cada instância e **não devem ser versionados**. Para produção, mantenha esse diretório em um volume persistente e proteja os arquivos com permissões adequadas.
 
 ## Automatizando a preparação do front-end
 
