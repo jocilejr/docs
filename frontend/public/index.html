@@ -3,22 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Painel Baileys</title>
+    <title>Painel Baileys - Instâncias</title>
     <style>
       :root {
         color-scheme: light;
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --bg: #f5f7fa;
+        --bg: #f5f7fb;
         --surface: #ffffff;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
         --border: #d9e2ec;
         --border-strong: #cbd2d9;
         --text: #1f2933;
         --muted: #52606d;
-        --muted-light: #829ab1;
-        --danger: #b91c1c;
         --success: #047857;
         --warning: #f59e0b;
+        --danger: #b91c1c;
       }
 
       * {
@@ -26,1016 +25,869 @@
       }
 
       body {
-        font-family: Arial, Helvetica, sans-serif;
         margin: 0;
-        padding: 0;
-        background-color: var(--bg);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
         color: var(--text);
       }
 
-      #baileys-dashboard {
-        max-width: 1080px;
-        margin: 0 auto 48px auto;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      main {
+        max-width: 960px;
+        margin: 32px auto;
+        padding: 0 20px 60px;
       }
 
-      h1,
-      h2,
-      h3,
-      h4 {
-        margin: 0;
-        font-weight: 600;
+      header {
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
       }
 
       h2 {
-        margin-bottom: 8px;
+        margin: 0 0 16px;
+        font-size: 20px;
       }
 
       p {
         margin: 0;
       }
 
-refactor-forms-to-tabs-and-cards
-      .dashboard-description {
-        color: var(--muted);
-        margin-bottom: 24px;
-
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
       }
 
-      .panel-section {
-        margin-bottom: 24px;
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
       }
 
       label {
-        display: block;
         font-weight: 600;
         color: #243b53;
-        margin-bottom: 6px;
       }
 
       input,
-      select,
       textarea {
-        width: 100%;
-        padding: 9px 11px;
         border: 1px solid var(--border-strong);
         border-radius: 6px;
+        padding: 10px 12px;
         font-size: 14px;
-        margin-bottom: 12px;
         font-family: inherit;
+        background: #fff;
       }
 
-      textarea {
-        min-height: 120px;
-        resize: vertical;
+      input:focus,
+      textarea:focus {
+        outline: 2px solid rgba(37, 99, 235, 0.35);
+        outline-offset: 2px;
       }
 
       button {
-        background-color: var(--primary);
-        color: #ffffff;
+        align-self: flex-start;
         border: none;
         border-radius: 6px;
-        padding: 10px 16px;
+        padding: 10px 18px;
         font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
-        transition: background-color 0.2s ease;
+        background: var(--primary);
+        color: #fff;
+        transition: background 0.2s ease;
       }
 
       button:hover {
-        background-color: var(--primary-hover);
+        background: var(--primary-dark);
       }
 
       button:disabled {
         cursor: not-allowed;
-        opacity: 0.6;
+        opacity: 0.65;
       }
 
-      .inline-hint {
-        font-size: 12px;
-        color: var(--muted-light);
-        margin-top: -8px;
-        margin-bottom: 12px;
+      button.secondary {
+        background: #334155;
       }
 
-      pre {
-        background: #f8fafc;
-        border: 1px solid #e4e7eb;
-        border-radius: 6px;
-        padding: 12px;
-        overflow-x: auto;
+      button.secondary:hover {
+        background: #1e293b;
+      }
+
+      button.danger {
+        background: var(--danger);
+      }
+
+      button.danger:hover {
+        background: #991b1b;
+      }
+
+      .hint {
         font-size: 13px;
-        color: #1f2933;
-        margin: 0;
+        color: var(--muted);
       }
 
-      .result-container {
-        margin-top: 12px;
+      .feedback {
+        font-size: 14px;
+        font-weight: 500;
       }
 
-      .error {
+      .feedback.error {
         color: var(--danger);
       }
 
-      .settings-grid {
-        display: grid;
-        gap: 18px;
+      .feedback.success {
+        color: var(--success);
       }
 
-      @media (min-width: 720px) {
-        .settings-grid.two-columns {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
+      .section {
+        margin-bottom: 32px;
       }
 
-      .tabs {
+      .instances-header {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
         gap: 12px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 24px;
-        flex-wrap: wrap;
       }
 
-      .tab-button {
-        background: transparent;
-        color: var(--muted);
-        border-radius: 6px 6px 0 0;
-        border: 1px solid transparent;
-        border-bottom: none;
-        padding: 10px 16px;
-        font-weight: 600;
-      }
-
-      .tab-button.active {
-        background: var(--surface);
-        color: var(--text);
-        border-color: var(--border) var(--border) transparent var(--border);
-      }
-
-      .tab-content {
-        display: none;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-
-      .instance-actions {
+      .instances-list {
         display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .instances-grid {
-        display: grid;
+        flex-direction: column;
         gap: 16px;
-      }
-
-      @media (min-width: 960px) {
-        .instances-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
       }
 
       .instance-card {
         border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 18px;
-        background: #fdfdfd;
+        padding: 20px;
+        background: #fff;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
       }
 
       .instance-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
         gap: 12px;
+        align-items: baseline;
+        flex-wrap: wrap;
       }
 
       .instance-title {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
-        color: var(--text);
       }
 
-      .instance-id {
+      .instance-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
         font-size: 13px;
-        color: var(--muted-light);
+        color: var(--muted);
       }
 
       .status-badge {
-        display: inline-flex;
-        align-items: center;
         padding: 4px 10px;
         border-radius: 999px;
         font-size: 12px;
         font-weight: 600;
+        letter-spacing: 0.04em;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
         background: #e4e7eb;
         color: #243b53;
-        white-space: nowrap;
       }
 
-      .status-badge.connected {
-        background: rgba(4, 120, 87, 0.12);
+      .status-ready {
+        background: rgba(4, 120, 87, 0.15);
         color: var(--success);
       }
 
-      .status-badge.pending {
-        background: rgba(245, 158, 11, 0.14);
+      .status-pending_qr {
+        background: rgba(245, 158, 11, 0.18);
         color: var(--warning);
       }
 
-      .status-badge.disconnected {
-        background: rgba(185, 28, 28, 0.12);
+      .status-disconnected {
+        background: rgba(185, 28, 28, 0.14);
         color: var(--danger);
       }
 
-      .qr-area {
-        margin-top: 8px;
+      .instance-actions {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
-      .qr-preview img {
+      .qr-container,
+      .endpoints-container {
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+
+      .qr-status {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+
+      .qr-image {
         max-width: 220px;
-        border: 1px solid var(--border-strong);
+        border: 1px solid var(--border);
         border-radius: 8px;
         padding: 8px;
-        background: #ffffff;
+        background: #fff;
       }
 
-      .empty-state {
-        padding: 32px;
-        border: 2px dashed var(--border);
-        border-radius: 12px;
-        text-align: center;
-        color: var(--muted);
-      }
-
-      .endpoints-container {
+      .endpoints-grid {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 14px;
       }
 
       .endpoint-card {
-        border: 1px solid #e4e7eb;
-        border-radius: 6px;
-        padding: 16px;
-        background: #fdfefe;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        background: #f8fafc;
       }
 
       .endpoint-header {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+        gap: 10px;
         flex-wrap: wrap;
+        margin-bottom: 8px;
       }
 
       .method-badge {
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
         padding: 4px 8px;
         border-radius: 4px;
-        letter-spacing: 0.04em;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
       }
 
       .method-get {
-        background-color: rgba(16, 185, 129, 0.15);
+        background: rgba(16, 185, 129, 0.16);
         color: #047857;
       }
 
       .method-post {
-        background-color: rgba(37, 99, 235, 0.15);
-        color: #1d4ed8;
+        background: rgba(37, 99, 235, 0.18);
+        color: var(--primary);
       }
 
-      .endpoint-path {
-        font-family: 'Fira Code', 'Courier New', monospace;
+      .method-delete {
+        background: rgba(185, 28, 28, 0.16);
+        color: var(--danger);
+      }
+
+      .method-patch {
+        background: rgba(234, 179, 8, 0.18);
+        color: var(--warning);
+      }
+
+      code,
+      pre {
+        font-family: "Fira Code", "Source Code Pro", monospace;
         font-size: 13px;
-        color: #1f2933;
-        background: #f8fafc;
-        border: 1px solid #e4e7eb;
-        padding: 4px 8px;
+      }
+
+      code {
+        background: #e4e7eb;
+        padding: 4px 6px;
         border-radius: 4px;
       }
 
-      .endpoint-description {
-        margin: 0 0 12px 0;
-        color: #52606d;
-        font-size: 13px;
+      pre {
+        margin: 10px 0 0;
+        padding: 12px;
+        border-radius: 6px;
+        background: #111827;
+        color: #e5e7eb;
+        overflow-x: auto;
       }
 
-      .copy-row {
-        margin-bottom: 12px;
+      .empty-state {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 32px;
+        text-align: center;
+        color: var(--muted);
       }
 
-      .copy-row:last-of-type {
-        margin-bottom: 0;
+      .hidden {
+        display: none !important;
       }
 
-      .copy-label {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        color: #52606d;
-        margin-bottom: 6px;
-      }
+      @media (max-width: 640px) {
+        main {
+          margin: 24px auto;
+          padding: 0 14px 40px;
+        }
 
-      .copy-block {
-        display: flex;
-        align-items: stretch;
-        gap: 8px;
-      }
+        .card {
+          padding: 18px;
+        }
 
-      .copy-block code,
-      .copy-block pre {
-        flex: 1;
-        margin: 0;
-        background: #f8fafc;
-        border: 1px solid #e4e7eb;
-        border-radius: 4px;
-        padding: 10px;
-        font-size: 13px;
-        color: #1f2933;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
-
-      .copy-button {
-        background-color: #334155;
-        border: 1px solid #1e293b;
-        color: #ffffff;
-        padding: 0 14px;
-        font-size: 13px;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      .copy-button:hover {
-        background-color: #1e293b;
-      }
-
-      .endpoint-warning {
-        margin: 12px 0 0 0;
-        font-size: 12px;
-        color: #b91c1c;
+        .instance-card {
+          padding: 16px;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="baileys-dashboard">
-      <h2>Painel interativo Baileys</h2>
-      <p class="dashboard-description">
-        Configure o servidor, informe o token Bearer e utilize as abas abaixo para criar instâncias, acompanhar QR Codes e
-        enviar mensagens.
-      </p>
+    <main class="stack">
+      <header>
+        <h1>Painel de Instâncias Baileys</h1>
+        <p class="hint">
+          Conecte números via QR Code, monitore o status das instâncias e copie os endpoints prontos para uso em outros
+          sistemas.
+        </p>
+      </header>
 
-      <section class="panel-section">
-        <h3>Configurações gerais</h3>
-        <div class="settings-grid two-columns">
-          <div>
-            <label for="server-base">Servidor alvo (base URL)</label>
-            <input id="server-base" name="server-base" placeholder="https://api.exemplo.com" type="url" />
-            <p class="inline-hint">Deixe em branco para utilizar caminhos relativos ao mesmo domínio.</p>
-          </div>
-          <div>
-            <label for="bearer-token">Token Bearer</label>
-            <input id="bearer-token" name="bearer-token" placeholder="Bearer eyJhbGciOi..." />
-            <p class="inline-hint">Se o token não possuir o prefixo <code>Bearer</code>, ele será adicionado automaticamente.</p>
-          </div>
-        </div>
-      </section>
-
-      <div class="tabs" role="tablist">
-        <button class="tab-button active" data-tab="instances" role="tab" aria-controls="tab-instances" aria-selected="true">
-          Instâncias
-        </button>
-        <button class="tab-button" data-tab="messages" role="tab" aria-controls="tab-messages" aria-selected="false">
-          Mensagens
-        </button>
-      </div>
-
-refactor-forms-to-tabs-and-cards
-      <section id="tab-instances" class="tab-content active" role="tabpanel">
-        <div class="panel-section">
-          <h3>Nova instância</h3>
-
-          <form id="create-instance-form">
-            <label for="instance-id">Identificador da instância</label>
-            <input id="instance-id" name="instance-id" placeholder="instancia-01" required />
-
-            <label for="instance-name">Nome (opcional)</label>
-            <input id="instance-name" name="instance-name" placeholder="Instância principal" />
-
-            <label for="instance-webhook">Webhook URL (opcional)</label>
-            <input id="instance-webhook" name="instance-webhook" placeholder="https://exemplo.com/webhooks" />
-
+      <section class="card section" aria-labelledby="nova-instancia">
+        <div class="stack">
+          <h2 id="nova-instancia">Nova instância</h2>
+          <form id="create-instance-form" class="stack">
+            <div class="field">
+              <label for="instance-id">Identificador</label>
+              <input id="instance-id" name="instance-id" placeholder="campanha-01" required />
+            </div>
+            <div class="field">
+              <label for="campaign-name">Nome da campanha (opcional)</label>
+              <input id="campaign-name" name="campaign-name" placeholder="Campanha principal" />
+              <p class="hint">Use este nome para identificar o cartão após a conexão.</p>
+            </div>
             <button type="submit">Criar instância</button>
+            <p id="form-feedback" class="feedback"></p>
           </form>
-          <div class="result-container">
-            <pre id="create-instance-result">Aguardando envio...</pre>
-          </div>
-refactor-forms-to-tabs-and-cards
-
-        </div>
-
-refactor-forms-to-tabs-and-cards
-        <div class="panel-section">
-          <div class="instances-grid" id="instances-grid"></div>
-          <div class="empty-state" id="instances-empty" hidden>
-            Nenhuma instância encontrada. Crie uma nova instância ou recarregue para sincronizar com o servidor.
-          </div>
         </div>
       </section>
 
-      <section id="tab-messages" class="tab-content" role="tabpanel" aria-hidden="true">
-        <div class="panel-section">
-          <h3>Enviar mensagem</h3>
-
-          <form id="send-message-form">
-            <label for="message-instance-id">Identificador da instância</label>
-            <input id="message-instance-id" name="message-instance-id" placeholder="instancia-01" required />
-
-            <label for="message-to">Número do destinatário (DDD + número)</label>
-            <input id="message-to" name="message-to" placeholder="5599999999999" required />
-
-            <label for="message-type">Tipo de mensagem</label>
-            <select id="message-type" name="message-type">
-              <option value="text" selected>text</option>
-              <option value="media">media</option>
-              <option value="template">template</option>
-            </select>
-
-            <label for="message-payload">Payload da mensagem (JSON)</label>
-            <textarea
-              id="message-payload"
-              name="message-payload"
-              placeholder='{"text": "Olá, esta é uma mensagem automática."}'
-              required
-            ></textarea>
-            <p class="inline-hint">Informe o objeto JSON conforme o tipo selecionado.</p>
-
-            <button type="submit">Enviar mensagem</button>
-          </form>
-          <div class="result-container">
-            <pre id="send-message-result">Aguardando envio...</pre>
+      <section class="card section" aria-labelledby="lista-instancias">
+        <div class="stack">
+          <div class="instances-header">
+            <h2 id="lista-instancias">Instâncias cadastradas</h2>
+            <button type="button" id="refresh-button" class="secondary">Atualizar lista</button>
           </div>
-refactor-forms-to-tabs-and-cards
-
+          <p id="instances-feedback" class="feedback"></p>
+          <div id="instances-empty" class="empty-state hidden">
+            Nenhuma instância cadastrada ainda. Crie uma nova instância para gerar o QR Code e iniciar a autenticação.
+          </div>
+          <div id="instance-list" class="instances-list"></div>
         </div>
       </section>
-    </div>
+    </main>
+
     <script>
-      window.addEventListener('load', () => {
-        initBaileysDashboard();
-      });
+      (() => {
+        const form = document.getElementById('create-instance-form');
+        const formFeedback = document.getElementById('form-feedback');
+        const refreshButton = document.getElementById('refresh-button');
+        const instanceList = document.getElementById('instance-list');
+        const instancesFeedback = document.getElementById('instances-feedback');
+        const emptyState = document.getElementById('instances-empty');
+        const instanceIdInput = document.getElementById('instance-id');
+        const campaignInput = document.getElementById('campaign-name');
 
-      function initBaileysDashboard() {
-        const serverInput = document.getElementById('server-base');
-        const tokenInput = document.getElementById('bearer-token');
-        const createForm = document.getElementById('create-instance-form');
-        const createResult = document.getElementById('create-instance-result');
-        const messageForm = document.getElementById('send-message-form');
-        const messageResult = document.getElementById('send-message-result');
-refactor-forms-to-tabs-and-cards
-        const instancesGrid = document.getElementById('instances-grid');
-        const instancesEmpty = document.getElementById('instances-empty');
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabs = document.querySelectorAll('.tab-content');
+        const STATUS_LABELS = {
+          ready: 'Conectada',
+          pending_qr: 'Aguardando QR Code',
+          disconnected: 'Desconectada',
+        };
 
         const state = {
           instances: [],
           polling: new Map(),
         };
 
-        tabButtons.forEach((button) => {
-          button.addEventListener('click', () => {
-            const target = button.dataset.tab;
-            tabButtons.forEach((btn) => {
-              const isActive = btn.dataset.tab === target;
-              btn.classList.toggle('active', isActive);
-              btn.setAttribute('aria-selected', String(isActive));
-            });
-            tabs.forEach((tab) => {
-              const isActive = tab.id === `tab-${target}`;
-              tab.classList.toggle('active', isActive);
-              tab.toggleAttribute('aria-hidden', !isActive);
-            });
-          });
-        });
-
-
-        try {
-          const savedServer = localStorage.getItem('baileys-dashboard-server');
-          if (savedServer) {
-            serverInput.value = savedServer;
-          }
-          const savedToken = localStorage.getItem('baileys-dashboard-token');
-          if (savedToken) {
-            tokenInput.value = savedToken;
-          }
-        } catch (error) {
-          console.warn('Não foi possível recuperar configurações salvas:', error);
-        }
-
-        const persistSettings = () => {
-          try {
-            localStorage.setItem('baileys-dashboard-server', serverInput.value.trim());
-            localStorage.setItem('baileys-dashboard-token', tokenInput.value.trim());
-          } catch (error) {
-            console.warn('Não foi possível salvar configurações:', error);
-          }
-        };
-
-        const getSelectedServer = () => serverInput.value?.trim();
-
-        const buildUrl = (path) => {
-          const base = getSelectedServer() || '';
-          const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-          if (!normalizedBase) {
+        function normalizePath(path) {
+          if (/^https?:\/\//i.test(path)) {
             return path;
           }
           if (!path.startsWith('/')) {
-            return `${normalizedBase}/${path}`;
+            return `/${path}`;
           }
-          return `${normalizedBase}${path}`;
-        };
+          return path;
+        }
 
-        const normalizeToken = () => {
-          const token = tokenInput.value.trim();
-          if (!token) {
-            return '';
-          }
-          return token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`;
-        };
-
-        const buildHeaders = (contentType = 'application/json') => {
-          const headers = { Accept: 'application/json' };
-          if (contentType) {
-            headers['Content-Type'] = contentType;
-          }
-          const token = normalizeToken();
-          if (token) {
-refactor-forms-to-tabs-and-cards
-            headers.Authorization = token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`;
-
-            persistSettings();
-          }
-          return headers;
-        };
-
-refactor-forms-to-tabs-and-cards
-        const renderResponse = async (response, target) => {
-
-
-          let text = '';
-          try {
-            text = await response.clone().text();
-          } catch (error) {
-            console.warn('Não foi possível ler a resposta como texto:', error);
-          }
-
-          let formatted = text;
-          try {
-            formatted = JSON.stringify(JSON.parse(text), null, 2);
-            target.classList.remove('error');
-          } catch (error) {
-            if (!response.ok) {
-              target.classList.add('error');
-            } else {
-              target.classList.remove('error');
+        async function apiFetch(path, { method = 'GET', body } = {}) {
+          const hasBody = body !== undefined;
+          const response = await fetch(normalizePath(path), {
+            method,
+            headers: {
+              Accept: 'application/json',
+              ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+            },
+            body: hasBody ? JSON.stringify(body) : undefined,
+          });
+          const text = await response.text();
+          let data = null;
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch (error) {
+              data = text;
             }
           }
+          return { response, data };
+        }
 
-          if (!response.ok) {
-            target.classList.add('error');
+        function setFormFeedback(message, type = 'info') {
+          formFeedback.textContent = message || '';
+          formFeedback.classList.remove('error', 'success');
+          if (!message) return;
+          if (type === 'error') {
+            formFeedback.classList.add('error');
+          } else if (type === 'success') {
+            formFeedback.classList.add('success');
           }
+        }
 
-          target.textContent = formatted || '(sem conteúdo)';
-          return text;
-        };
+        function setInstancesFeedback(message, type = 'info') {
+          instancesFeedback.textContent = message || '';
+          instancesFeedback.classList.remove('error', 'success');
+          if (!message) return;
+          if (type === 'error') {
+            instancesFeedback.classList.add('error');
+          } else if (type === 'success') {
+            instancesFeedback.classList.add('success');
+          }
+        }
 
-        const normalizeInstancesPayload = (payload) => {
-          if (Array.isArray(payload)) {
-            return payload;
-          }
-          if (payload?.instances) {
-            return Array.isArray(payload.instances) ? payload.instances : [];
-          }
-          if (payload?.data) {
-            if (Array.isArray(payload.data)) {
-              return payload.data;
+        function stopQrPolling(instanceId) {
+          const entry = state.polling.get(instanceId);
+          if (!entry) return;
+          clearInterval(entry.timer);
+          state.polling.delete(instanceId);
+        }
+
+        function stopAllPolling() {
+          state.polling.forEach(({ timer }) => clearInterval(timer));
+          state.polling.clear();
+        }
+
+        function getDisplayUrl(path) {
+          const origin = window.location.origin;
+          return new URL(normalizePath(path), origin).href;
+        }
+
+        function buildEndpointBlocks(instance) {
+          const encodedId = encodeURIComponent(instance.id);
+          return [
+            {
+              method: 'GET',
+              path: `/qrcode?instanceId=${encodedId}`,
+              description: 'Recupera o QR Code atual da instância para autenticação.',
+            },
+            {
+              method: 'GET',
+              path: `/instances/${encodedId}`,
+              description: 'Obtém os detalhes e metadados cadastrados da instância.',
+            },
+            {
+              method: 'PATCH',
+              path: `/instances/${encodedId}/status`,
+              description: 'Atualiza manualmente o status armazenado da instância.',
+              example: {
+                status: 'disconnected',
+              },
+            },
+            {
+              method: 'DELETE',
+              path: `/instances/${encodedId}`,
+              description: 'Desconecta e remove a instância, incluindo a sessão salva.',
+            },
+            {
+              method: 'POST',
+              path: '/messages',
+              description: 'Envia uma mensagem via Baileys utilizando esta instância.',
+              example: {
+                instanceId: instance.id,
+                to: '5511999999999',
+                type: 'text',
+                message: {
+                  text: 'Olá! Esta é uma mensagem enviada pela instância.'
+                }
+              },
+            },
+          ];
+        }
+
+        function renderEndpoints(container, instance) {
+          const endpoints = buildEndpointBlocks(instance);
+          const wrapper = document.createElement('div');
+          wrapper.className = 'endpoints-grid';
+
+          endpoints.forEach((endpoint) => {
+            const card = document.createElement('article');
+            card.className = 'endpoint-card';
+
+            const header = document.createElement('div');
+            header.className = 'endpoint-header';
+
+            const methodBadge = document.createElement('span');
+            methodBadge.className = `method-badge method-${endpoint.method.toLowerCase()}`;
+            methodBadge.textContent = endpoint.method;
+
+            const pathLabel = document.createElement('code');
+            pathLabel.textContent = getDisplayUrl(endpoint.path);
+
+            header.appendChild(methodBadge);
+            header.appendChild(pathLabel);
+            card.appendChild(header);
+
+            if (endpoint.description) {
+              const description = document.createElement('p');
+              description.className = 'hint';
+              description.textContent = endpoint.description;
+              card.appendChild(description);
             }
-            if (payload.data?.instances) {
-              return Array.isArray(payload.data.instances) ? payload.data.instances : [];
+
+            if (endpoint.example) {
+              const pre = document.createElement('pre');
+              pre.textContent = JSON.stringify(endpoint.example, null, 2);
+              card.appendChild(pre);
             }
-          }
-          if (payload?.result && Array.isArray(payload.result)) {
-            return payload.result;
-          }
-          return [];
-        };
 
-        const formatStatus = (status) => {
-          if (!status) return 'desconhecido';
-          return String(status).replace(/_/g, ' ').toLowerCase();
-        };
+            wrapper.appendChild(card);
+          });
 
-        const statusClass = (status) => {
-          const normalized = formatStatus(status);
-          if (normalized.includes('connect') || normalized.includes('open') || normalized.includes('ready')) {
-            return 'connected';
-          }
-          if (normalized.includes('scan') || normalized.includes('pending') || normalized.includes('init')) {
-            return 'pending';
-          }
-          if (normalized.includes('close') || normalized.includes('disc') || normalized.includes('fail')) {
-            return 'disconnected';
-          }
-          return '';
-        };
+          container.innerHTML = '';
+          container.appendChild(wrapper);
+        }
 
-        const isConnectedStatus = (status) => {
-          const normalized = formatStatus(status);
-          return (
-            normalized.includes('connect') ||
-            normalized.includes('open') ||
-            normalized.includes('ready') ||
-            normalized.includes('authenticated') ||
-            normalized.includes('paired')
-          );
-        };
+        function renderInstances() {
+          stopAllPolling();
+          instanceList.innerHTML = '';
 
-        const stopQrFlow = (instanceId) => {
-          const timer = state.polling.get(instanceId);
-          if (timer) {
-            clearTimeout(timer);
-            state.polling.delete(instanceId);
-          }
-        };
-
-        const renderInstances = () => {
-          instancesGrid.innerHTML = '';
           if (!state.instances.length) {
-            instancesEmpty.hidden = false;
+            emptyState.classList.remove('hidden');
             return;
           }
-          instancesEmpty.hidden = true;
+
+          emptyState.classList.add('hidden');
 
           state.instances.forEach((instance) => {
             const card = document.createElement('article');
             card.className = 'instance-card';
-            card.dataset.instanceId = instance.id || instance.instanceId || instance.name;
+            card.dataset.instanceId = instance.id;
 
             const header = document.createElement('div');
             header.className = 'instance-header';
 
             const title = document.createElement('div');
             title.className = 'instance-title';
-            const displayName = instance?.metadata?.name || instance?.name || instance?.id || instance?.instanceId || 'Instância';
+            const displayName =
+              instance?.metadata?.campaignName || instance?.metadata?.name || instance?.metadata?.displayName || instance.id;
             title.textContent = displayName;
 
-            const badge = document.createElement('span');
-            badge.className = 'status-badge instance-status';
-            const currentStatus = instance?.status || instance?.connectionStatus || instance?.state || 'desconhecido';
-            badge.textContent = formatStatus(currentStatus);
-            badge.classList.add(statusClass(currentStatus));
+            const statusBadge = document.createElement('span');
+            const statusKey = instance.status && STATUS_LABELS[instance.status] ? instance.status : 'pending_qr';
+            statusBadge.className = `status-badge status-${statusKey}`;
+            statusBadge.textContent = STATUS_LABELS[statusKey] || instance.status || 'Desconhecido';
 
             header.appendChild(title);
-            header.appendChild(badge);
+            header.appendChild(statusBadge);
 
-            const identifier = document.createElement('div');
-            identifier.className = 'instance-id';
-            const instanceId = instance?.id || instance?.instanceId || instance?.reference || '';
-            identifier.textContent = instanceId ? `ID: ${instanceId}` : 'ID não informado';
-
-            const qrArea = document.createElement('div');
-            qrArea.className = 'qr-area';
-
-            const qrMessage = document.createElement('span');
-            qrMessage.className = 'qr-message';
-            qrMessage.textContent = 'QR Code não solicitado.';
-
-            const qrPreview = document.createElement('div');
-            qrPreview.className = 'qr-preview';
-
-            qrArea.appendChild(qrMessage);
-            qrArea.appendChild(qrPreview);
+            const meta = document.createElement('div');
+            meta.className = 'instance-meta';
+            const idRow = document.createElement('span');
+            const idLabel = document.createElement('strong');
+            idLabel.textContent = 'ID: ';
+            idRow.appendChild(idLabel);
+            idRow.append(instance.id);
+            meta.appendChild(idRow);
+            if (instance?.metadata && Object.keys(instance.metadata).length) {
+              const metadataRow = document.createElement('span');
+              const metadataLabel = document.createElement('strong');
+              metadataLabel.textContent = 'Metadados: ';
+              metadataRow.appendChild(metadataLabel);
+              metadataRow.append(JSON.stringify(instance.metadata));
+              meta.appendChild(metadataRow);
+            }
 
             const actions = document.createElement('div');
             actions.className = 'instance-actions';
 
             const qrButton = document.createElement('button');
             qrButton.type = 'button';
-            qrButton.className = 'qr-button';
-            qrButton.textContent = 'Gerar QR Code';
-            qrButton.addEventListener('click', () => {
-              startQrFlow(instanceId);
-            });
+            qrButton.className = 'secondary';
+            qrButton.dataset.action = 'toggle-qr';
+            qrButton.textContent = 'Exibir QR Code';
+
+            const endpointsButton = document.createElement('button');
+            endpointsButton.type = 'button';
+            endpointsButton.dataset.action = 'toggle-endpoints';
+            endpointsButton.textContent = 'Endpoints';
 
             const deleteButton = document.createElement('button');
             deleteButton.type = 'button';
-            deleteButton.className = 'delete-button';
+            deleteButton.className = 'danger';
+            deleteButton.dataset.action = 'delete-instance';
             deleteButton.textContent = 'Desconectar';
-            deleteButton.addEventListener('click', () => {
-              deleteInstance(instanceId);
-            });
 
-            actions.appendChild(qrButton);
-            actions.appendChild(deleteButton);
+            actions.append(qrButton, endpointsButton, deleteButton);
 
-            card.appendChild(header);
-            card.appendChild(identifier);
-            card.appendChild(actions);
-            card.appendChild(qrArea);
+            const qrContainer = document.createElement('div');
+            qrContainer.className = 'qr-container hidden';
+            qrContainer.dataset.role = 'qr-container';
 
-            instancesGrid.appendChild(card);
+            const qrStatus = document.createElement('p');
+            qrStatus.className = 'qr-status';
+            qrStatus.dataset.role = 'qr-status';
+            qrStatus.textContent = 'Clique em "Exibir QR Code" para gerar o código.';
+
+            const qrImage = document.createElement('img');
+            qrImage.className = 'qr-image hidden';
+            qrImage.dataset.role = 'qr-image';
+            qrImage.alt = `QR Code da instância ${instance.id}`;
+
+            qrContainer.append(qrStatus, qrImage);
+
+            const endpointsContainer = document.createElement('div');
+            endpointsContainer.className = 'endpoints-container hidden';
+            endpointsContainer.dataset.role = 'endpoints';
+            renderEndpoints(endpointsContainer, instance);
+
+            card.append(header, meta, actions, qrContainer, endpointsContainer);
+            instanceList.appendChild(card);
           });
-        };
+        }
 
-        const refreshInstanceCard = (instanceId, updater) => {
-          const card = instancesGrid.querySelector(`[data-instance-id="${instanceId}"]`);
-          if (!card) return;
-          updater(card);
-        };
-
-        const fetchInstances = async () => {
+        async function loadInstances() {
+          setInstancesFeedback('Carregando instâncias...');
           try {
-            const response = await fetch(buildUrl('/instances'), {
-              method: 'GET',
-              headers: buildHeaders(null),
-            });
-            const payload = await response.json().catch(() => []);
-            state.instances = normalizeInstancesPayload(payload);
-            renderInstances();
-          } catch (error) {
-            console.error('Erro ao carregar instâncias:', error);
-          }
-        };
-
-        const startQrFlow = async (instanceId) => {
-          if (!instanceId) return;
-          stopQrFlow(instanceId);
-
-          const updateElements = (callback) => {
-            refreshInstanceCard(instanceId, (card) => {
-              const elements = {
-                card,
-                qrMessage: card.querySelector('.qr-message'),
-                qrPreview: card.querySelector('.qr-preview'),
-                qrButton: card.querySelector('.qr-button'),
-                statusBadge: card.querySelector('.instance-status'),
-              };
-              callback(elements);
-            });
-          };
-
-          const pollQr = async () => {
-            try {
-              updateElements(({ qrMessage, qrButton }) => {
-                if (qrMessage) qrMessage.textContent = 'Solicitando QR Code...';
-                if (qrButton) qrButton.disabled = true;
-              });
-
-              const response = await fetch(buildUrl(`/qrcode?instanceId=${encodeURIComponent(instanceId)}`), {
-                method: 'GET',
-                headers: buildHeaders(null),
-              });
-
-              const rawText = await response.text();
-              let data = null;
-              try {
-                data = rawText ? JSON.parse(rawText) : null;
-              } catch (error) {
-                console.warn('QR Code retornou conteúdo não JSON:', error);
-              }
-
-              if (!response.ok) {
-                updateElements(({ qrMessage, qrPreview, qrButton }) => {
-                  if (qrMessage) {
-                    qrMessage.textContent = `Erro ao buscar QR Code: ${response.status} ${response.statusText}`;
-                    qrMessage.classList.add('error');
-                  }
-                  if (qrPreview) qrPreview.innerHTML = '';
-                  if (qrButton) qrButton.disabled = false;
-                });
-                stopQrFlow(instanceId);
-                return;
-              }
-
-              const qrStatus = data?.status || data?.connectionStatus || data?.instanceStatus;
-              const connected = isConnectedStatus(qrStatus) || data?.connected === true;
-
-              updateElements(({ qrMessage, qrPreview, statusBadge, qrButton }) => {
-                if (statusBadge) {
-                  statusBadge.textContent = formatStatus(qrStatus || qrMessage?.textContent);
-                  statusBadge.className = `status-badge instance-status ${statusClass(qrStatus)}`.trim();
-                }
-                if (qrMessage) {
-                  qrMessage.classList.toggle('error', false);
-                  qrMessage.textContent = connected
-                    ? 'Instância conectada com sucesso.'
-                    : 'QR Code disponível. Escaneie para conectar.';
-                }
-                if (qrPreview) {
-                  qrPreview.innerHTML = '';
-                  if (!connected && data?.image?.value) {
-                    if ((data?.image?.type || '').toLowerCase() === 'base64') {
-                      const img = document.createElement('img');
-                      img.alt = `QR Code da instância ${instanceId}`;
-                      img.src = `data:image/png;base64,${data.image.value}`;
-                      qrPreview.appendChild(img);
-                    } else if ((data?.image?.type || '').toLowerCase() === 'url') {
-                      const link = document.createElement('a');
-                      link.href = data.image.value;
-                      link.target = '_blank';
-                      link.rel = 'noopener noreferrer';
-                      link.textContent = 'Abrir QR Code em nova aba';
-                      qrPreview.appendChild(link);
-                    }
-                  }
-                }
-                if (qrButton) {
-                  qrButton.disabled = connected;
-                  qrButton.textContent = connected ? 'Conectado' : 'Gerar QR Code';
-                }
-              });
-
-              if (connected) {
-                stopQrFlow(instanceId);
-                await fetchInstances();
-                return;
-              }
-
-              const nextPoll = setTimeout(pollQr, 6000);
-              state.polling.set(instanceId, nextPoll);
-            } catch (error) {
-              console.error('Erro durante o fluxo de QR Code:', error);
-              updateElements(({ qrMessage, qrButton }) => {
-                if (qrMessage) {
-                  qrMessage.textContent = `Erro ao buscar QR Code: ${error.message}`;
-                  qrMessage.classList.add('error');
-                }
-                if (qrButton) {
-                  qrButton.disabled = false;
-                  qrButton.textContent = 'Tentar novamente';
-                }
-              });
-              stopQrFlow(instanceId);
-            }
-          };
-
-          pollQr();
-        };
-
-        const deleteInstance = async (instanceId) => {
-          if (!instanceId) return;
-          stopQrFlow(instanceId);
-          refreshInstanceCard(instanceId, (card) => {
-            const deleteButton = card.querySelector('.delete-button');
-            if (deleteButton) {
-              deleteButton.disabled = true;
-              deleteButton.textContent = 'Desconectando...';
-            }
-          });
-          try {
-            const response = await fetch(buildUrl(`/instances/${encodeURIComponent(instanceId)}`), {
-              method: 'DELETE',
-              headers: buildHeaders(),
-            });
+            const { response, data } = await apiFetch('/instances');
             if (!response.ok) {
-              throw new Error(`${response.status} ${response.statusText}`);
+              throw new Error((data && data.message) || 'Não foi possível carregar as instâncias.');
             }
+            const instances = Array.isArray(data)
+              ? data
+              : Array.isArray(data?.instances)
+              ? data.instances
+              : [];
+            state.instances = instances;
+            renderInstances();
+            setInstancesFeedback(`Instâncias atualizadas em ${new Date().toLocaleTimeString()}.`, 'success');
           } catch (error) {
-            refreshInstanceCard(instanceId, (card) => {
-              const deleteButton = card.querySelector('.delete-button');
-              const qrMessage = card.querySelector('.qr-message');
-              if (deleteButton) {
-                deleteButton.disabled = false;
-                deleteButton.textContent = 'Desconectar';
-              }
-              if (qrMessage) {
-                qrMessage.textContent = `Não foi possível desconectar: ${error.message}`;
-                qrMessage.classList.add('error');
-              }
-            });
-            return;
+            console.error(error);
+            setInstancesFeedback(error.message || 'Erro inesperado ao carregar instâncias.', 'error');
+            instanceList.innerHTML = '';
+            emptyState.classList.add('hidden');
           }
-          await fetchInstances();
-        };
+        }
 
-        createForm.addEventListener('submit', async (event) => {
+        async function handleCreateInstance(event) {
           event.preventDefault();
-          createResult.textContent = 'Enviando...';
-          createResult.classList.remove('error');
+          setFormFeedback('Criando instância...');
+          const submitButton = form.querySelector('button[type="submit"]');
+          submitButton.disabled = true;
 
-          const id = createInstanceIdInput.value.trim();
-          const name = createInstanceNameInput.value.trim();
-          const webhook = createInstanceWebhookInput.value.trim();
-
-          const payload = { id };
-          if (name || webhook) {
-            payload.metadata = {};
-            if (name) payload.metadata.name = name;
-            if (webhook) payload.metadata.webhookUrl = webhook;
-          }
-
-          try {
-            const response = await fetch(buildUrl('/instances'), {
-              method: 'POST',
-              headers: buildHeaders(),
-              body: JSON.stringify(payload),
-            });
-refactor-forms-to-tabs-and-cards
-            await renderResponse(response, createResult);
-
-            if (response.ok) {
-              await fetchInstances();
-            }
-          } catch (error) {
-            createResult.classList.add('error');
-            createResult.textContent = `Erro ao enviar requisição: ${error.message}`;
-          }
-          updateAllEndpointPreviews();
-        });
-
-        messageForm.addEventListener('submit', async (event) => {
-          event.preventDefault();
-          messageResult.textContent = 'Enviando mensagem...';
-          messageResult.classList.remove('error');
-
-          const instanceId = messageInstanceIdInput.value.trim();
-          const to = messageToInput.value.trim();
-          const type = messageTypeSelect.value;
-          const rawPayload = messagePayloadInput.value.trim();
-
-          const parsedPayload = parseJsonInput(rawPayload);
-          if (parsedPayload.error) {
-            messageResult.classList.add('error');
-            messageResult.textContent = `Payload inválido: ${parsedPayload.error.message}`;
-            return;
-          }
+          const id = instanceIdInput.value.trim();
+          const campaignName = campaignInput.value.trim();
 
           const payload = {
-            instanceId,
-            to,
-            type,
-            message: parsedPayload.data || {},
+            id,
+            metadata: campaignName ? { campaignName } : {},
           };
 
           try {
-            const response = await fetch(buildUrl('/messages'), {
-              method: 'POST',
-              headers: buildHeaders(),
-              body: JSON.stringify(payload),
-            });
-            await renderResponse(response, messageResult);
+            const { response, data } = await apiFetch('/instances', { method: 'POST', body: payload });
+            if (!response.ok) {
+              throw new Error((data && data.message) || 'Falha ao criar a instância.');
+            }
+            setFormFeedback('Instância criada com sucesso. Consulte o QR Code para autenticar.', 'success');
+            form.reset();
+            instanceIdInput.focus();
+            await loadInstances();
           } catch (error) {
-            messageResult.classList.add('error');
-            messageResult.textContent = `Erro ao enviar mensagem: ${error.message}`;
+            console.error(error);
+            setFormFeedback(error.message || 'Erro inesperado ao criar instância.', 'error');
+          } finally {
+            submitButton.disabled = false;
           }
-          updateAllEndpointPreviews();
-        });
+        }
 
-        updateAllEndpointPreviews();
-      }
-
-      function setupTabs() {
-        const sections = document.querySelectorAll('.panel-section');
-        sections.forEach((section) => {
-          const buttons = section.querySelectorAll('.tab-button');
-          const contents = section.querySelectorAll('.tab-content');
-          if (!buttons.length || !contents.length) {
+        async function handleDeleteInstance(instanceId) {
+          if (!confirm('Deseja desconectar e remover esta instância?')) {
             return;
           }
-          buttons.forEach((button) => {
-            button.addEventListener('click', () => {
-              const target = button.dataset.target;
-              buttons.forEach((btn) => {
-                btn.classList.toggle('active', btn === button);
-              });
-              contents.forEach((content) => {
-                content.classList.toggle('active', content.dataset.tab === target);
-              });
+          try {
+            const { response, data } = await apiFetch(`/instances/${encodeURIComponent(instanceId)}`, {
+              method: 'DELETE',
             });
-          });
+            if (!response.ok) {
+              throw new Error((data && data.message) || 'Falha ao desconectar a instância.');
+            }
+            stopQrPolling(instanceId);
+            await loadInstances();
+          } catch (error) {
+            console.error(error);
+            setInstancesFeedback(error.message || 'Erro ao desconectar instância.', 'error');
+          }
+        }
+
+        function toggleEndpoints(card) {
+          const container = card.querySelector('[data-role="endpoints"]');
+          container.classList.toggle('hidden');
+        }
+
+        function toggleQr(card) {
+          const instanceId = card.dataset.instanceId;
+          const container = card.querySelector('[data-role="qr-container"]');
+          const button = card.querySelector('button[data-action="toggle-qr"]');
+          const qrStatus = card.querySelector('[data-role="qr-status"]');
+          const qrImage = card.querySelector('[data-role="qr-image"]');
+          const isVisible = !container.classList.contains('hidden');
+
+          if (isVisible) {
+            container.classList.add('hidden');
+            button.textContent = 'Exibir QR Code';
+            qrImage.classList.add('hidden');
+            qrImage.removeAttribute('src');
+            qrStatus.textContent = 'Clique em "Exibir QR Code" para gerar o código.';
+            stopQrPolling(instanceId);
+            return;
+          }
+
+          container.classList.remove('hidden');
+          button.textContent = 'Ocultar QR Code';
+          startQrPolling(instanceId, card);
+        }
+
+        function resolveQrData(data) {
+          if (!data) return null;
+
+          if (data.image) {
+            const { value, type, mimeType, expiresIn } = data.image;
+            if (!value) {
+              return null;
+            }
+            if (value.startsWith('data:')) {
+              return { src: value, expiresIn: expiresIn ?? data.expiresIn };
+            }
+            if (type === 'url' || value.startsWith('http')) {
+              return { src: value, expiresIn: expiresIn ?? data.expiresIn };
+            }
+            const mime = mimeType || 'image/png';
+            return { src: `data:${mime};base64,${value}`, expiresIn: expiresIn ?? data.expiresIn };
+          }
+
+          if (typeof data.qrCode === 'string') {
+            return { src: data.qrCode, expiresIn: data.expiresIn };
+          }
+
+          if (typeof data.qr === 'string') {
+            return { src: data.qr, expiresIn: data.expiresIn };
+          }
+
+          if (typeof data.base64 === 'string') {
+            return { src: `data:image/png;base64,${data.base64}`, expiresIn: data.expiresIn };
+          }
+
+          if (typeof data.value === 'string') {
+            const value = data.value;
+            if (value.startsWith('data:') || value.startsWith('http')) {
+              return { src: value, expiresIn: data.expiresIn };
+            }
+            return { src: `data:image/png;base64,${value}`, expiresIn: data.expiresIn };
+          }
+
+          return null;
+        }
+
+        function startQrPolling(instanceId, card) {
+          const qrStatus = card.querySelector('[data-role="qr-status"]');
+          const qrImage = card.querySelector('[data-role="qr-image"]');
+
+          async function fetchQr() {
+            qrStatus.textContent = 'Buscando QR Code...';
+            qrImage.classList.add('hidden');
+            qrImage.removeAttribute('src');
+            try {
+              const { response, data } = await apiFetch(`/qrcode?instanceId=${encodeURIComponent(instanceId)}`);
+              if (response.status === 204) {
+                qrStatus.textContent = 'Instância já autenticada.';
+                stopQrPolling(instanceId);
+                await loadInstances();
+                return;
+              }
+
+              if (response.ok) {
+                const qrInfo = resolveQrData(data);
+                if (qrInfo?.src) {
+                  qrImage.src = qrInfo.src;
+                  qrImage.classList.remove('hidden');
+                  const expiresIn = qrInfo.expiresIn ? `Expira em ${qrInfo.expiresIn} segundos.` : '';
+                  qrStatus.textContent = `Escaneie o QR Code pelo WhatsApp. ${expiresIn}`.trim();
+                  return;
+                }
+              }
+
+              {
+                const message = typeof data === 'string' ? data : data?.message || 'QR Code não disponível.';
+                qrStatus.textContent = message;
+                qrImage.classList.add('hidden');
+                if (response.status === 404 && data?.code === 'qr_not_available') {
+                  stopQrPolling(instanceId);
+                  await loadInstances();
+                }
+              }
+            } catch (error) {
+              console.error(error);
+              qrStatus.textContent = 'Erro ao consultar o QR Code.';
+              qrImage.classList.add('hidden');
+            }
+          }
+
+          fetchQr();
+          const timer = setInterval(fetchQr, 7000);
+          state.polling.set(instanceId, { timer });
+        }
+
+        instanceList.addEventListener('click', (event) => {
+          const button = event.target.closest('button[data-action]');
+          if (!button) return;
+          const card = button.closest('.instance-card');
+          if (!card) return;
+          const instanceId = card.dataset.instanceId;
+
+          switch (button.dataset.action) {
+            case 'toggle-qr':
+              toggleQr(card);
+              break;
+            case 'toggle-endpoints':
+              toggleEndpoints(card);
+              break;
+            case 'delete-instance':
+              handleDeleteInstance(instanceId);
+              break;
+            default:
+              break;
+          }
         });
 
-        fetchInstances();
-      }
+        form.addEventListener('submit', handleCreateInstance);
+        refreshButton.addEventListener('click', loadInstances);
+        loadInstances();
+      })();
     </script>
   </body>
 </html>

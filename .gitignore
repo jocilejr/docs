@@ -1,0 +1,9 @@
+# Node dependencies
+frontend/node_modules/
+
+# Baileys session data
+frontend/data/sessions/
+frontend/data/instances.json
+
+# Logs
+*.log
