@@ -10,8 +10,12 @@ const publicDir = path.resolve(__dirname, '..', 'public');
 const indexPath = path.join(publicDir, 'index.html');
 
 const shouldProxy = (pathname) => {
-  const apiPrefixes = ['/qrcode', '/instances', '/messages'];
-  return apiPrefixes.some((prefix) => pathname.startsWith(prefix));
+  const apiPrefixes = ['qrcode', 'instances', 'messages'];
+
+  return apiPrefixes.some((prefix) => {
+    const pattern = new RegExp(`/(?:${prefix})(?:/|$)`);
+    return pattern.test(pathname);
+  });
 };
 
 const logRequest = (req, statusCode) => {
