@@ -16,6 +16,20 @@ const DATA_DIR = path.join(__dirname, 'data');
 const SESSIONS_DIR = path.join(DATA_DIR, 'sessions');
 const INSTANCES_FILE = path.join(DATA_DIR, 'instances.json');
 const QR_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutos
+const DEFAULT_VERSION = (() => {
+  const raw = process.env.BAILEYS_VERSION;
+  if (raw) {
+    const parts = raw
+      .split(',')
+      .map((part) => Number(part.trim()))
+      .filter((value) => Number.isFinite(value));
+    if (parts.length === 3) {
+      return parts;
+    }
+    console.warn('Variável BAILEYS_VERSION inválida. Use o formato "primary,secondary,patch".');
+  }
+  return [2, 3000, 1023223821];
+})();
 const ALLOWED_STATUSES = new Set(['pending_qr', 'ready', 'disconnected']);
 const ALLOWED_MEDIA_TYPES = new Set(['image', 'video', 'audio', 'document', 'sticker']);
 
@@ -117,6 +131,40 @@ class BaileysManager {
   constructor(store) {
     this.store = store;
     this.sessions = new Map();
+    this.versionPromise = null;
+    this.cachedVersion = null;
+  }
+
+  async resolveBaileysVersion() {
+    if (this.cachedVersion) {
+      return this.cachedVersion;
+    }
+
+    if (!this.versionPromise) {
+      this.versionPromise = (async () => {
+        try {
+          const { version } = await fetchLatestBaileysVersion();
+          if (Array.isArray(version) && version.length === 3) {
+            this.cachedVersion = version;
+            return version;
+          }
+          throw new Error('Versão inválida retornada pelo serviço.');
+        } catch (error) {
+          console.warn('Não foi possível obter a versão mais recente do Baileys:', error.message);
+          return DEFAULT_VERSION;
+        }
+      })();
+    }
+
+    try {
+      const resolved = await this.versionPromise;
+      if (resolved !== DEFAULT_VERSION) {
+        this.cachedVersion = resolved;
+      }
+      return this.cachedVersion || resolved;
+    } finally {
+      this.versionPromise = null;
+    }
   }
 
   async initExistingInstances() {
@@ -144,7 +192,7 @@ class BaileysManager {
 
     const authDir = path.join(SESSIONS_DIR, instanceId);
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
-    const { version } = await fetchLatestBaileysVersion();
+    const version = await this.resolveBaileysVersion();
 
     const sock = makeWASocket({
       version,
