@@ -1048,6 +1048,7 @@
                 if (imageSrc) {
                   qrImage.src = imageSrc;
                   qrImage.classList.remove('hidden');
+fix-qr-code-scanning-failure-hury0x
 
                   const expiresIn = extractExpiresIn(data);
                   if (typeof expiresIn === 'number' && expiresIn > 0) {
@@ -1062,6 +1063,7 @@
                 }
 
                 console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
+
               }
 
               const message =
