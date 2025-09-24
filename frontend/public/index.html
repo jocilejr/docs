@@ -1064,6 +1064,8 @@
                 if (imageSrc) {
                   qrImage.src = imageSrc;
                   qrImage.classList.remove('hidden');
+fix-qr-code-scanning-failure-t6ru6p
+
 
                   const expiresIn = extractExpiresIn(data);
                   if (typeof expiresIn === 'number' && expiresIn > 0) {
@@ -1078,6 +1080,7 @@
                 }
 
                 console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
+fix-qr-code-scanning-failure-t6ru6p
               }
 
               const message =
@@ -1092,6 +1095,7 @@
                 stopQrPolling(instanceId);
                 return;
               }
+
 
               scheduleNextFetch(7000);
             } catch (error) {
