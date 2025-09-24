@@ -116,7 +116,7 @@
       button:disabled {
         cursor: not-allowed;
         opacity: 0.65;
-add-swagger-documentation-for-baileys-qr-code-ava4a4
+add-swagger-documentation-for-baileys-qr-code-52k7x2
       }
 
       button.secondary {
@@ -363,7 +363,7 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
         </p>
       </header>
 
-add-swagger-documentation-for-baileys-qr-code-ava4a4
+add-swagger-documentation-for-baileys-qr-code-52k7x2
 
       <section class="card section" aria-labelledby="nova-instancia">
         <div class="stack">
@@ -401,7 +401,7 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
 
     <script>
       (() => {
-add-swagger-documentation-for-baileys-qr-code-ava4a4
+add-swagger-documentation-for-baileys-qr-code-52k7x2
 
         const form = document.getElementById('create-instance-form');
         const formFeedback = document.getElementById('form-feedback');
@@ -411,22 +411,6 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
         const emptyState = document.getElementById('instances-empty');
         const instanceIdInput = document.getElementById('instance-id');
         const campaignInput = document.getElementById('campaign-name');
-
-add-swagger-documentation-for-baileys-qr-code-ava4a4
-        if (
-          !form ||
-          !formFeedback ||
-          !refreshButton ||
-          !instanceList ||
-          !instancesFeedback ||
-          !emptyState ||
-          !instanceIdInput ||
-          !campaignInput
-        ) {
-          console.error('Painel Baileys: elementos essenciais não encontrados no DOM.');
-          return;
-        }
-
 
         const STATUS_LABELS = {
           ready: 'Conectada',
@@ -439,8 +423,7 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
           polling: new Map(),
         };
 
-add-swagger-documentation-for-baileys-qr-code-ava4a4
-
+add-swagger-documentation-for-baileys-qr-code-52k7x2
         function normalizePath(path) {
           if (/^https?:\/\//i.test(path)) {
             return path;
@@ -511,7 +494,6 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
           const origin = window.location.origin;
           return new URL(normalizePath(path), origin).href;
         }
-add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         function buildEndpointBlocks(instance) {
           const encodedId = encodeURIComponent(instance.id);
@@ -679,20 +661,20 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
             qrStatus.className = 'qr-status';
             qrStatus.dataset.role = 'qr-status';
             qrStatus.textContent = 'Clique em "Exibir QR Code" para gerar o código.';
-add-swagger-documentation-for-baileys-qr-code-ava4a4
 
             const qrImage = document.createElement('img');
             qrImage.className = 'qr-image hidden';
             qrImage.dataset.role = 'qr-image';
             qrImage.alt = `QR Code da instância ${instance.id}`;
+add-swagger-documentation-for-baileys-qr-code-52k7x2
 
             qrContainer.append(qrStatus, qrImage);
+
 
             const endpointsContainer = document.createElement('div');
             endpointsContainer.className = 'endpoints-container hidden';
             endpointsContainer.dataset.role = 'endpoints';
             renderEndpoints(endpointsContainer, instance);
-
 
             card.append(header, meta, actions, qrContainer, endpointsContainer);
             instanceList.appendChild(card);
@@ -721,10 +703,10 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
             emptyState.classList.add('hidden');
           }
         }
-add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         async function handleCreateInstance(event) {
           event.preventDefault();
+add-swagger-documentation-for-baileys-qr-code-52k7x2
 
           setFormFeedback('Criando instância...');
           const submitButton = form.querySelector('button[type="submit"]');
@@ -738,8 +720,7 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
             metadata: campaignName ? { campaignName } : {},
           };
 
-add-swagger-documentation-for-baileys-qr-code-ava4a4
-
+add-swagger-documentation-for-baileys-qr-code-52k7x2
           try {
             const { response, data } = await apiFetch('/instances', { method: 'POST', body: payload });
             if (!response.ok) {
@@ -803,11 +784,9 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
           button.textContent = 'Ocultar QR Code';
           startQrPolling(instanceId, card);
         }
-add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         function resolveQrData(data) {
           if (!data) return null;
-
 
           if (data.image) {
             const { value, type, mimeType, expiresIn } = data.image;
@@ -896,7 +875,6 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
           state.polling.set(instanceId, { timer });
         }
 
-add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         instanceList.addEventListener('click', (event) => {
           const button = event.target.closest('button[data-action]');
@@ -922,7 +900,7 @@ add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
-add-swagger-documentation-for-baileys-qr-code-ava4a4
+add-swagger-documentation-for-baileys-qr-code-52k7x2
 
         loadInstances();
       })();
