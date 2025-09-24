@@ -1,0 +1,374 @@
+openapi: 3.0.3
+info:
+  title: WhatsApp Integration API
+  description: |
+    API para gerenciamento de instâncias WhatsApp, autenticação via QR Code e envio de mensagens utilizando Baileys.
+  version: 1.0.0
+servers:
+  - url: https://api.exemplo.com
+    description: Ambiente de produção
+  - url: http://localhost:3000
+    description: Ambiente de desenvolvimento
+security:
+  - bearerAuth: []
+tags:
+  - name: Autenticacao
+    description: Operações relacionadas à autenticação via QR Code.
+  - name: Instancias
+    description: Gerenciamento de instâncias do WhatsApp.
+  - name: Mensagens
+    description: Envio de mensagens através do Baileys.
+paths:
+  /qrcode:
+    get:
+      tags:
+        - Autenticacao
+      summary: Recupera o QR Code para autenticação
+      description: Retorna a imagem do QR Code necessária para autenticar uma instância.
+      parameters:
+        - in: query
+          name: instanceId
+          description: Identificador da instância que está sendo autenticada.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: QR Code gerado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QRCodeResponse'
+              examples:
+                base64:
+                  summary: QR Code em Base64
+                  value:
+                    instanceId: instancia-01
+                    image:
+                      type: base64
+                      value: iVBORw0KGgoAAAANSUhEUgAA...
+                      expiresIn: 120
+                url:
+                  summary: QR Code hospedado em URL
+                  value:
+                    instanceId: instancia-01
+                    image:
+                      type: url
+                      value: https://cdn.exemplo.com/qrcodes/instancia-01.png
+                      expiresIn: 120
+        '404':
+          description: Instância não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro ao gerar o QR Code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /instances:
+    get:
+      tags:
+        - Instancias
+      summary: Lista instâncias disponíveis
+      responses:
+        '200':
+          description: Lista de instâncias retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instance'
+              examples:
+                default:
+                  summary: Lista de instâncias
+                  value:
+                    - id: instancia-01
+                      status: ready
+                      metadata:
+                        name: Instância principal
+                        connectedAt: '2024-04-10T12:03:45Z'
+                    - id: instancia-02
+                      status: pending_qr
+                      metadata:
+                        name: Instância de suporte
+                        connectedAt: null
+    post:
+      tags:
+        - Instancias
+      summary: Cria uma nova instância
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstanceCreateRequest'
+            examples:
+              default:
+                summary: Criação de instância
+                value:
+                  id: instancia-03
+                  metadata:
+                    name: Instância temporária
+                    webhookUrl: https://exemplo.com/webhooks
+      responses:
+        '201':
+          description: Instância criada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '400':
+          description: Requisição inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /instances/{instanceId}:
+    get:
+      tags:
+        - Instancias
+      summary: Obtém detalhes de uma instância específica
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '200':
+          description: Detalhes da instância.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '404':
+          description: Instância não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Instancias
+      summary: Remove uma instância
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      responses:
+        '204':
+          description: Instância removida com sucesso.
+        '404':
+          description: Instância não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /instances/{instanceId}/status:
+    patch:
+      tags:
+        - Instancias
+      summary: Atualiza o status de uma instância
+      parameters:
+        - $ref: '#/components/parameters/InstanceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstanceStatusUpdate'
+            examples:
+              ready:
+                summary: Atualizando para pronta
+                value:
+                  status: ready
+      responses:
+        '200':
+          description: Status atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instance'
+        '400':
+          description: Status inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /messages:
+    post:
+      tags:
+        - Mensagens
+      summary: Envia uma mensagem via Baileys
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaileysMessageRequest'
+            examples:
+              text:
+                summary: Mensagem de texto
+                value:
+                  instanceId: instancia-01
+                  to: 5599999999999
+                  type: text
+                  message:
+                    text: Olá, esta é uma mensagem automática.
+              media:
+                summary: Mensagem com mídia
+                value:
+                  instanceId: instancia-01
+                  to: 5599999999999
+                  type: media
+                  message:
+                    caption: Veja o anexo
+                    mediaUrl: https://cdn.exemplo.com/files/imagem.jpg
+      responses:
+        '202':
+          description: Mensagem aceita para envio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaileysMessageResponse'
+              examples:
+                accepted:
+                  summary: Mensagem aceita
+                  value:
+                    messageId: MSG-12345
+                    status: queued
+                    timestamp: '2024-04-10T12:05:00Z'
+        '400':
+          description: Dados inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Instância não encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    InstanceId:
+      in: path
+      name: instanceId
+      description: Identificador único da instância.
+      required: true
+      schema:
+        type: string
+  schemas:
+    QRCodeImage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [base64, url]
+          description: Tipo da representação do QR Code.
+        value:
+          type: string
+          description: Conteúdo do QR Code (imagem em Base64 ou URL).
+        expiresIn:
+          type: integer
+          format: int32
+          description: Tempo em segundos até que o QR Code expire.
+      required:
+        - type
+        - value
+    QRCodeResponse:
+      type: object
+      properties:
+        instanceId:
+          type: string
+        image:
+          $ref: '#/components/schemas/QRCodeImage'
+      required:
+        - instanceId
+        - image
+    Instance:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending_qr, ready, disconnected]
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - status
+    InstanceCreateRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Identificador único da instância.
+        metadata:
+          type: object
+          description: Metadados adicionais como nome e URL de webhook.
+          additionalProperties: true
+      required:
+        - id
+    InstanceStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending_qr, ready, disconnected]
+      required:
+        - status
+    BaileysMessageRequest:
+      type: object
+      properties:
+        instanceId:
+          type: string
+          description: Identificador da instância que enviará a mensagem.
+        to:
+          type: string
+          description: Número do destinatário em formato internacional.
+        type:
+          type: string
+          enum: [text, media, template]
+        message:
+          type: object
+          description: Conteúdo específico da mensagem de acordo com o tipo.
+          additionalProperties: true
+      required:
+        - instanceId
+        - to
+        - type
+        - message
+    BaileysMessageResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+        status:
+          type: string
+          enum: [queued, sent, delivered, failed]
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - messageId
+        - status
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
