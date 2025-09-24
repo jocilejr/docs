@@ -114,6 +114,21 @@ python installer.py --frontend-path frontend/ --baileys-command node scripts/meu
 
 Você pode utilizar qualquer visualizador de OpenAPI. Algumas opções:
 
+### Painel interativo embutido
+
+O arquivo `frontend/public/index.html` inclui o Swagger UI acompanhado de um painel "Painel interativo Baileys" que consome as
+mesmas rotas documentadas via `fetch`.
+
+1. Sirva o diretório `frontend/public/` em um servidor estático (por exemplo, `npx http-server frontend/public`).
+2. Acesse a página gerada e aguarde o carregamento do Swagger UI.
+3. No painel lateral:
+   - escolha o servidor desejado (as opções são preenchidas com os `servers` do OpenAPI);
+   - crie instâncias informando o `id` e, opcionalmente, metadados;
+   - recupere o QR Code renderizado diretamente (quando retornado como Base64) ou como link externo;
+   - envie mensagens preenchendo o payload conforme a rota `POST /messages`.
+4. Caso utilize autenticação Bearer pelo botão "Authorize" do Swagger UI, o token é reutilizado automaticamente nas chamadas do
+   painel.
+
 ### Swagger UI local
 
 1. Instale o pacote do Swagger UI:
