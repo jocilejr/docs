@@ -116,6 +116,7 @@
       button:disabled {
         cursor: not-allowed;
         opacity: 0.65;
+add-swagger-documentation-for-baileys-qr-code-ava4a4
       }
 
       button.secondary {
@@ -133,6 +134,7 @@
       button.danger:hover {
         background: #991b1b;
       }
+
 
       .hint {
         font-size: 13px;
@@ -361,6 +363,8 @@
         </p>
       </header>
 
+add-swagger-documentation-for-baileys-qr-code-ava4a4
+
       <section class="card section" aria-labelledby="nova-instancia">
         <div class="stack">
           <h2 id="nova-instancia">Nova instância</h2>
@@ -397,6 +401,8 @@
 
     <script>
       (() => {
+add-swagger-documentation-for-baileys-qr-code-ava4a4
+
         const form = document.getElementById('create-instance-form');
         const formFeedback = document.getElementById('form-feedback');
         const refreshButton = document.getElementById('refresh-button');
@@ -406,6 +412,7 @@
         const instanceIdInput = document.getElementById('instance-id');
         const campaignInput = document.getElementById('campaign-name');
 
+add-swagger-documentation-for-baileys-qr-code-ava4a4
         if (
           !form ||
           !formFeedback ||
@@ -420,6 +427,7 @@
           return;
         }
 
+
         const STATUS_LABELS = {
           ready: 'Conectada',
           pending_qr: 'Aguardando QR Code',
@@ -430,6 +438,8 @@
           instances: [],
           polling: new Map(),
         };
+
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         function normalizePath(path) {
           if (/^https?:\/\//i.test(path)) {
@@ -501,6 +511,7 @@
           const origin = window.location.origin;
           return new URL(normalizePath(path), origin).href;
         }
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         function buildEndpointBlocks(instance) {
           const encodedId = encodeURIComponent(instance.id);
@@ -562,6 +573,7 @@
 
             const pathLabel = document.createElement('code');
             pathLabel.textContent = getDisplayUrl(endpoint.path);
+
 
             header.appendChild(methodBadge);
             header.appendChild(pathLabel);
@@ -667,6 +679,7 @@
             qrStatus.className = 'qr-status';
             qrStatus.dataset.role = 'qr-status';
             qrStatus.textContent = 'Clique em "Exibir QR Code" para gerar o código.';
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
             const qrImage = document.createElement('img');
             qrImage.className = 'qr-image hidden';
@@ -679,6 +692,7 @@
             endpointsContainer.className = 'endpoints-container hidden';
             endpointsContainer.dataset.role = 'endpoints';
             renderEndpoints(endpointsContainer, instance);
+
 
             card.append(header, meta, actions, qrContainer, endpointsContainer);
             instanceList.appendChild(card);
@@ -707,9 +721,11 @@
             emptyState.classList.add('hidden');
           }
         }
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         async function handleCreateInstance(event) {
           event.preventDefault();
+
           setFormFeedback('Criando instância...');
           const submitButton = form.querySelector('button[type="submit"]');
           submitButton.disabled = true;
@@ -721,6 +737,8 @@
             id,
             metadata: campaignName ? { campaignName } : {},
           };
+
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
           try {
             const { response, data } = await apiFetch('/instances', { method: 'POST', body: payload });
@@ -785,9 +803,11 @@
           button.textContent = 'Ocultar QR Code';
           startQrPolling(instanceId, card);
         }
+add-swagger-documentation-for-baileys-qr-code-ava4a4
 
         function resolveQrData(data) {
           if (!data) return null;
+
 
           if (data.image) {
             const { value, type, mimeType, expiresIn } = data.image;
@@ -876,6 +896,8 @@
           state.polling.set(instanceId, { timer });
         }
 
+add-swagger-documentation-for-baileys-qr-code-ava4a4
+
         instanceList.addEventListener('click', (event) => {
           const button = event.target.closest('button[data-action]');
           if (!button) return;
@@ -900,6 +922,8 @@
 
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
+add-swagger-documentation-for-baileys-qr-code-ava4a4
+
         loadInstances();
       })();
     </script>
