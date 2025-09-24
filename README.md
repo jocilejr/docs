@@ -129,6 +129,30 @@ mesmas rotas documentadas via `fetch`.
 4. Caso utilize autenticação Bearer pelo botão "Authorize" do Swagger UI, o token é reutilizado automaticamente nas chamadas do
    painel.
 
+### Suporte a implantação em subdiretórios
+
+O servidor estático incluso (`frontend/scripts/start.js`) encaminha chamadas das APIs `/qrcode`, `/instances` e `/messages` mesmo quando o painel é publicado atrás de um subdiretório (por exemplo, `https://exemplo.com/painel/`). Para validar manualmente:
+
+1. Inicie o serviço Baileys em outra porta:
+
+   ```bash
+   BAILEYS_PORT=3002 node frontend/baileys-service.js
+   ```
+
+2. Em um novo terminal, suba o servidor estático:
+
+   ```bash
+   PORT=3000 node frontend/scripts/start.js
+   ```
+
+3. Faça uma requisição simulando o subdiretório desejado e confirme que o Express recebe a rota original:
+
+   ```bash
+   curl http://localhost:3000/painel/instances
+   ```
+
+   O comando deve retornar a listagem de instâncias (por padrão, um array vazio `[]`), indicando que o proxy preservou o caminho completo `/instances/...`.
+
 ### Swagger UI local
 
 1. Instale o pacote do Swagger UI:
