@@ -350,6 +350,7 @@
         }
       }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
   </head>
   <body>
     <main class="stack">
@@ -437,11 +438,27 @@
           polling: new Map(),
         };
 
+        function sanitizeBaseUrl(raw) {
+          if (!raw) return '';
+          const trimmed = raw.trim();
+          if (!trimmed) return '';
+          if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed.replace(/\/+$/, '');
+          }
+          if (/^\/\//.test(trimmed)) {
+            return `https:${trimmed}`.replace(/\/+$/, '');
+          }
+          if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed)) {
+            return `http://${trimmed}`.replace(/\/+$/, '');
+          }
+          return trimmed.replace(/\/+$/, '');
+        }
+
         function loadSettings() {
           try {
             const savedBase = localStorage.getItem('baileys-panel-base');
             const savedToken = localStorage.getItem('baileys-panel-token');
-            if (savedBase) serverInput.value = savedBase;
+            if (savedBase) serverInput.value = sanitizeBaseUrl(savedBase);
             if (savedToken) tokenInput.value = savedToken;
           } catch (error) {
             console.warn('Não foi possível carregar configurações salvas:', error);
@@ -450,15 +467,43 @@
 
         function persistSettings() {
           try {
-            localStorage.setItem('baileys-panel-base', serverInput.value.trim());
+            localStorage.setItem('baileys-panel-base', sanitizeBaseUrl(serverInput.value));
             localStorage.setItem('baileys-panel-token', tokenInput.value.trim());
           } catch (error) {
             console.warn('Não foi possível salvar configurações:', error);
           }
         }
 
+        function guessDefaultBaseUrl() {
+          if (sanitizeBaseUrl(serverInput.value)) {
+            return;
+          }
+
+          try {
+            const { protocol, hostname, port } = window.location;
+            if (!protocol || !hostname) {
+              return;
+            }
+
+            let candidate = '';
+
+            if (port === '3000') {
+              candidate = `${protocol}//${hostname}:3002`;
+            } else if (!port) {
+              candidate = `${protocol}//${hostname}:3002`;
+            }
+
+            if (candidate) {
+              serverInput.value = sanitizeBaseUrl(candidate);
+              persistSettings();
+            }
+          } catch (error) {
+            console.warn('Não foi possível determinar a URL padrão do serviço Baileys:', error);
+          }
+        }
+
         function getBaseUrl() {
-          return serverInput.value.trim();
+          return sanitizeBaseUrl(serverInput.value);
         }
 
         function normalizePath(path) {
@@ -534,13 +579,17 @@
         function stopQrPolling(instanceId) {
           const entry = state.polling.get(instanceId);
           if (!entry) return;
-          clearInterval(entry.timer);
+          if (entry.refreshTimer) {
+            clearTimeout(entry.refreshTimer);
+          }
+          if (entry.countdownTimer) {
+            clearInterval(entry.countdownTimer);
+          }
           state.polling.delete(instanceId);
         }
 
         function stopAllPolling() {
-          state.polling.forEach(({ timer }) => clearInterval(timer));
-          state.polling.clear();
+          state.polling.forEach((_, instanceId) => stopQrPolling(instanceId));
         }
 
         function getDisplayUrl(path) {
@@ -635,6 +684,125 @@
 
           container.innerHTML = '';
           container.appendChild(wrapper);
+        }
+
+        function isProbablyBase64(value) {
+          if (typeof value !== 'string') return false;
+          const sanitized = value.trim();
+          if (!sanitized) return false;
+          const base64Pattern = /^[A-Za-z0-9+/=\s]+$/;
+          return sanitized.length % 4 === 0 && base64Pattern.test(sanitized);
+        }
+
+        async function ensureDataUrl(value, typeHint = 'image/png') {
+          if (!value || typeof value !== 'string') {
+            return null;
+          }
+
+          const trimmed = value.trim();
+          if (!trimmed) {
+            return null;
+          }
+
+          if (trimmed.startsWith('data:image/')) {
+            return trimmed;
+          }
+
+          if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed;
+          }
+
+          if (isProbablyBase64(trimmed)) {
+            return `data:${typeHint};base64,${trimmed}`;
+          }
+
+          if (window.QRCode && typeof window.QRCode.toDataURL === 'function') {
+            try {
+              return await new Promise((resolve, reject) => {
+                window.QRCode.toDataURL(
+                  trimmed,
+                  {
+                    errorCorrectionLevel: 'M',
+                    margin: 2,
+                  },
+                  (error, url) => {
+                    if (error) {
+                      reject(error);
+                    } else {
+                      resolve(url);
+                    }
+                  }
+                );
+              });
+            } catch (error) {
+              console.warn('Falha ao converter QR code em data URL:', error);
+            }
+          }
+
+          return null;
+        }
+
+        async function resolveQrImageSource(payload) {
+          if (!payload) {
+            return null;
+          }
+
+          if (typeof payload === 'string') {
+            return ensureDataUrl(payload);
+          }
+
+          if (payload.image) {
+            if (typeof payload.image === 'string') {
+              const direct = await ensureDataUrl(payload.image);
+              if (direct) return direct;
+            } else if (typeof payload.image === 'object') {
+              if (payload.image.value) {
+                const type = (payload.image.type || 'image/png').toLowerCase();
+                if (type === 'data-url') {
+                  const resolved = await ensureDataUrl(payload.image.value);
+                  if (resolved) return resolved;
+                } else {
+                  const mimeType = type === 'base64' ? 'image/png' : type;
+                  const resolved = await ensureDataUrl(payload.image.value, mimeType);
+                  if (resolved) return resolved;
+                }
+              }
+              if (payload.image.data) {
+                const resolved = await ensureDataUrl(payload.image.data);
+                if (resolved) return resolved;
+              }
+            }
+          }
+
+          const candidates = [payload.code, payload.qr, payload.value];
+          for (const candidate of candidates) {
+            if (!candidate) continue;
+            if (typeof candidate === 'string') {
+              const resolved = await ensureDataUrl(candidate);
+              if (resolved) return resolved;
+            } else if (typeof candidate === 'object' && candidate.value) {
+              const resolved = await ensureDataUrl(candidate.value);
+              if (resolved) return resolved;
+            }
+          }
+
+          return null;
+        }
+
+        function extractExpiresIn(payload) {
+          if (!payload || typeof payload !== 'object') {
+            return null;
+          }
+          if (typeof payload.expiresIn === 'number') {
+            return payload.expiresIn;
+          }
+          if (payload.image && typeof payload.image === 'object' && typeof payload.image.expiresIn === 'number') {
+            return payload.image.expiresIn;
+          }
+          if (payload.code && typeof payload.code === 'object' && typeof payload.code.expiresIn === 'number') {
+            return payload.code.expiresIn;
+          }
+          return null;
         }
 
         function renderInstances() {
@@ -838,38 +1006,135 @@
         }
 
         function startQrPolling(instanceId, card) {
+          stopQrPolling(instanceId);
+
           const qrStatus = card.querySelector('[data-role="qr-status"]');
           const qrImage = card.querySelector('[data-role="qr-image"]');
 
-          async function fetchQr() {
-            qrStatus.textContent = 'Buscando QR Code...';
-            qrImage.classList.add('hidden');
-            qrImage.removeAttribute('src');
+          const entry = {
+            refreshTimer: null,
+            countdownTimer: null,
+            fetching: false,
+          };
+
+          function updateCountdown(expiresIn) {
+            if (!Number.isFinite(expiresIn) || expiresIn <= 0) {
+              return;
+            }
+
+            if (entry.countdownTimer) {
+              clearInterval(entry.countdownTimer);
+            }
+
+            let remaining = Math.max(0, Math.floor(expiresIn));
+
+            const renderRemaining = () => {
+              if (!state.polling.has(instanceId)) {
+                return;
+              }
+
+              if (remaining <= 0) {
+                qrStatus.textContent = 'QR Code expirou. Gerando um novo...';
+                clearInterval(entry.countdownTimer);
+                entry.countdownTimer = null;
+                return;
+              }
+
+              const plural = remaining === 1 ? '' : 's';
+              qrStatus.textContent = `Escaneie o QR Code pelo WhatsApp. Expira em ${remaining} segundo${plural}.`;
+            };
+
+            renderRemaining();
+
+            entry.countdownTimer = setInterval(() => {
+              remaining -= 1;
+              renderRemaining();
+            }, 1000);
+          }
+
+          function scheduleNextFetch(delayMs) {
+            if (entry.refreshTimer) {
+              clearTimeout(entry.refreshTimer);
+            }
+
+            entry.refreshTimer = setTimeout(() => {
+              entry.refreshTimer = null;
+              fetchQr('refresh');
+            }, Math.max(2000, delayMs));
+          }
+
+          async function fetchQr(reason = 'initial') {
+            if (!state.polling.has(instanceId)) {
+              return;
+            }
+
+            if (entry.fetching) {
+              return;
+            }
+
+            entry.fetching = true;
+
+            if (!qrImage.src) {
+              qrImage.classList.add('hidden');
+            }
+
+            if (entry.countdownTimer) {
+              clearInterval(entry.countdownTimer);
+              entry.countdownTimer = null;
+            }
+
+            qrStatus.textContent = reason === 'refresh' ? 'Atualizando QR Code...' : 'Buscando QR Code...';
+
             try {
               const { response, data } = await apiFetch(`/qrcode?instanceId=${encodeURIComponent(instanceId)}`);
-              if (response.ok && data?.image?.value) {
-                qrImage.src = `data:image/png;base64,${data.image.value}`;
-                qrImage.classList.remove('hidden');
-                const expiresIn = data.image.expiresIn ? `Expira em ${data.image.expiresIn} segundos.` : '';
-                qrStatus.textContent = `Escaneie o QR Code pelo WhatsApp. ${expiresIn}`.trim();
-              } else {
-                const message = typeof data === 'string' ? data : data?.message || 'QR Code não disponível.';
-                qrStatus.textContent = message;
-                qrImage.classList.add('hidden');
-                if (response.status === 404 && data?.code === 'qr_not_available') {
-                  stopQrPolling(instanceId);
+              if (response.ok) {
+                const imageSrc = await resolveQrImageSource(data);
+                if (imageSrc) {
+                  qrImage.src = imageSrc;
+                  qrImage.classList.remove('hidden');
+
+                  const expiresIn = extractExpiresIn(data);
+                  if (typeof expiresIn === 'number' && expiresIn > 0) {
+                    updateCountdown(expiresIn);
+                    const nextDelay = (expiresIn - 3) * 1000;
+                    scheduleNextFetch(Number.isFinite(nextDelay) ? nextDelay : 7000);
+                  } else {
+                    qrStatus.textContent = 'Escaneie o QR Code pelo WhatsApp.';
+                    scheduleNextFetch(7000);
+                  }
+                  return;
                 }
+
+                console.warn('Resposta da API não contém imagem de QR Code reconhecida:', data);
               }
+
+              const message =
+                typeof data === 'string'
+                  ? data
+                  : data?.message || 'QR Code não disponível no momento.';
+              qrStatus.textContent = message;
+              qrImage.classList.add('hidden');
+              qrImage.removeAttribute('src');
+
+              if (response.status === 404 && data?.code === 'qr_not_available') {
+                stopQrPolling(instanceId);
+                return;
+              }
+
+              scheduleNextFetch(7000);
             } catch (error) {
               console.error(error);
               qrStatus.textContent = 'Erro ao consultar o QR Code.';
               qrImage.classList.add('hidden');
+              qrImage.removeAttribute('src');
+              scheduleNextFetch(7000);
+            } finally {
+              entry.fetching = false;
             }
           }
 
-          fetchQr();
-          const timer = setInterval(fetchQr, 7000);
-          state.polling.set(instanceId, { timer });
+          state.polling.set(instanceId, entry);
+          fetchQr('initial');
         }
 
         instanceList.addEventListener('click', (event) => {
@@ -896,17 +1161,28 @@
 
         form.addEventListener('submit', handleCreateInstance);
         refreshButton.addEventListener('click', loadInstances);
-        const handleServerChange = () => {
+        const handleServerChange = async () => {
+          const sanitized = sanitizeBaseUrl(serverInput.value);
+          if (sanitized !== serverInput.value) {
+            serverInput.value = sanitized;
+          }
           persistSettings();
-          renderInstances();
+          await loadInstances();
         };
 
-        serverInput.addEventListener('change', handleServerChange);
-        serverInput.addEventListener('blur', handleServerChange);
+        const handleServerChangeEvent = () => {
+          handleServerChange().catch((error) => {
+            console.error('Erro ao atualizar servidor Baileys configurado:', error);
+          });
+        };
+
+        serverInput.addEventListener('change', handleServerChangeEvent);
+        serverInput.addEventListener('blur', handleServerChangeEvent);
         tokenInput.addEventListener('change', persistSettings);
         tokenInput.addEventListener('blur', persistSettings);
 
         loadSettings();
+        guessDefaultBaseUrl();
         loadInstances();
       })();
     </script>

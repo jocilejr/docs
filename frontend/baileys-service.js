@@ -16,6 +16,20 @@ const DATA_DIR = path.join(__dirname, 'data');
 const SESSIONS_DIR = path.join(DATA_DIR, 'sessions');
 const INSTANCES_FILE = path.join(DATA_DIR, 'instances.json');
 const QR_EXPIRATION_MS = 2 * 60 * 1000; // 2 minutos
+const DEFAULT_VERSION = (() => {
+  const raw = process.env.BAILEYS_VERSION;
+  if (raw) {
+    const parts = raw
+      .split(',')
+      .map((part) => Number(part.trim()))
+      .filter((value) => Number.isFinite(value));
+    if (parts.length === 3) {
+      return parts;
+    }
+    console.warn('Variável BAILEYS_VERSION inválida. Use o formato "primary,secondary,patch".');
+  }
+  return [2, 3000, 1023223821];
+})();
 const ALLOWED_STATUSES = new Set(['pending_qr', 'ready', 'disconnected']);
 const ALLOWED_MEDIA_TYPES = new Set(['image', 'video', 'audio', 'document', 'sticker']);
 
@@ -117,6 +131,40 @@ class BaileysManager {
   constructor(store) {
     this.store = store;
     this.sessions = new Map();
+    this.versionPromise = null;
+    this.cachedVersion = null;
+  }
+
+  async resolveBaileysVersion() {
+    if (this.cachedVersion) {
+      return this.cachedVersion;
+    }
+
+    if (!this.versionPromise) {
+      this.versionPromise = (async () => {
+        try {
+          const { version } = await fetchLatestBaileysVersion();
+          if (Array.isArray(version) && version.length === 3) {
+            this.cachedVersion = version;
+            return version;
+          }
+          throw new Error('Versão inválida retornada pelo serviço.');
+        } catch (error) {
+          console.warn('Não foi possível obter a versão mais recente do Baileys:', error.message);
+          return DEFAULT_VERSION;
+        }
+      })();
+    }
+
+    try {
+      const resolved = await this.versionPromise;
+      if (resolved !== DEFAULT_VERSION) {
+        this.cachedVersion = resolved;
+      }
+      return this.cachedVersion || resolved;
+    } finally {
+      this.versionPromise = null;
+    }
   }
 
   async initExistingInstances() {
@@ -144,7 +192,7 @@ class BaileysManager {
 
     const authDir = path.join(SESSIONS_DIR, instanceId);
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
-    const { version } = await fetchLatestBaileysVersion();
+    const version = await this.resolveBaileysVersion();
 
     const sock = makeWASocket({
       version,
@@ -178,13 +226,29 @@ class BaileysManager {
     }
 
     if (update.qr) {
-      const qrDataUrl = await QRCode.toDataURL(update.qr);
-      const base64 = qrDataUrl.split(',')[1];
-      session.qr = {
-        type: 'base64',
-        value: base64,
-        expiresAt: Date.now() + QR_EXPIRATION_MS,
+      const expiresAt = Date.now() + QR_EXPIRATION_MS;
+      const qrInfo = {
+        raw: update.qr,
+        expiresAt,
+        image: null,
       };
+
+      try {
+        const qrDataUrl = await QRCode.toDataURL(update.qr);
+        const [prefix, value] = qrDataUrl.split(',');
+        if (value) {
+          const mime = prefix?.match(/^data:(.*?);/i)?.[1] || 'image/png';
+          qrInfo.image = {
+            type: 'base64',
+            mime,
+            value,
+          };
+        }
+      } catch (error) {
+        console.warn(`Não foi possível gerar imagem do QR para ${instanceId}:`, error.message);
+      }
+
+      session.qr = qrInfo;
       await this.store.updateStatus(instanceId, 'pending_qr');
     }
 
@@ -244,15 +308,35 @@ class BaileysManager {
     if (!session?.qr) {
       return null;
     }
+    if (Date.now() >= session.qr.expiresAt) {
+      session.qr = null;
+      return null;
+    }
+
     const expiresIn = Math.max(0, Math.floor((session.qr.expiresAt - Date.now()) / 1000));
-    return {
+    const payload = {
       instanceId,
-      image: {
-        type: session.qr.type,
-        value: session.qr.value,
-        expiresIn,
-      },
+      expiresIn,
     };
+
+    if (session.qr.image?.value) {
+      payload.image = {
+        type: session.qr.image.type,
+        mime: session.qr.image.mime,
+        value: session.qr.image.value,
+        expiresIn,
+      };
+    }
+
+    if (session.qr.raw) {
+      payload.code = {
+        format: 'raw',
+        value: session.qr.raw,
+        expiresIn,
+      };
+    }
+
+    return payload;
   }
 }
 
@@ -354,6 +438,18 @@ async function bootstrap() {
   await manager.initExistingInstances();
 
   const app = express();
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Authorization,Content-Type,Accept');
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+
+    return next();
+  });
+
   app.use(express.json({ limit: '5mb' }));
   app.use(bearerAuthMiddleware);
 
